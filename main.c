@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[]) {
     // Parse config file
-    struct Config *config = read_config(config, argv[1]);
+    struct Config config = read_config(argv[1]);
     
     // char *monitored_applications[];
     // get_applications(monitored_applications);
