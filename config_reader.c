@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config_reader.h"
+#include <string.h>
 
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
@@ -29,24 +30,45 @@ struct Config read_config(char *path) {
 
     // Parse time delay.
     int time = atoi(line);
-    printf("Time delay is %d\n", time);
+    // printf("Time delay is %d\n", time);
     config.time = time;
 
     // Read and parse programs to be monitored.
     int i = 0;
-    for (; i < MAX_CONFIG_PROGRAMS; i++) {
+    for (; i < MAX_CONFIG_PROGRAMS;) {
         read = getline(&line, &len, fp);
+
+        // Make sure read returns proper value.
         if (read == -1) {
             perror("Error while reading program list in config file or end of lines reached.");
             break;
             exit(EXIT_FAILURE);
         }
         config.application_names[i] = line;
-        // config.application_names[i][1] = "a";
-        printf("Character in string at position %ld is %s\n", len-1, &config.application_names[i][1]);
-        printf("Read program name from file: %s\n", *config.application_names[i][1]);
+
+        // Copy string remove newline, ensure null terminated.
+        int j = 0;
+        for (;;j++) {
+            // Make sure we don't have an empty line.
+            if (strlen(line) == 1) {
+                printf("Line length was zero");
+                break; 
+            }
+
+            // Copy chars from string and deal with new line and null chars.
+            if (line[j] == '\n' || line[j] == '\0') {
+                config.application_names[i][j] = '\0';  
+                printf("Constructed a word %s", config.application_names[i]);
+                i++;
+                break;
+            } 
+            config.application_names[i][j] = line[j];
+        }
+        
     }
 
+    // Set total application count.
+    config.application_count = i;
     fclose(fp);
     return config;
 };

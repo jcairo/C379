@@ -7,7 +7,9 @@
 int main(int argc, char *argv[]) {
     // Parse config file
     struct Config config = read_config(argv[1]);
-    
+    printf("App name: %s", config.application_names[1]);
+    printf("App count %d", config.application_count);   
+    int *test = (int *)malloc(sizeof(int)); 
     // char *monitored_applications[];
     // get_applications(monitored_applications);
     // Check whether an existing procnanny process is running.
