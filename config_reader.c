@@ -3,6 +3,8 @@
 #include "config_reader.h"
 #include <string.h>
 
+#define DEBUG 0
+
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
     // Open the file
@@ -24,7 +26,7 @@ struct Config read_config(char *path) {
     // Read the time delay.
     read = getline(&line, &len, fp); 
     if (read == -1) {
-        perror("Error reading first line of config file.");
+        perror("getline performed on config file found empty first line.");
         exit(EXIT_FAILURE);
     }
 
@@ -38,12 +40,17 @@ struct Config read_config(char *path) {
     for (; i < MAX_CONFIG_PROGRAMS;) {
         read = getline(&line, &len, fp);
 
-        // Make sure read returns proper value.
-        if (read == -1) {
-            perror("Error while reading program list in config file or end of lines reached.");
-            break;
+        // Ensure config file has at least one program to read.
+        if (read == -1 && i == 0) {
+            perror("No programs to monitor found in the config file. Procnanny will not run\n");
             exit(EXIT_FAILURE);
         }
+
+        //  Ensure we aren't at the end of the config file.
+        if (read == -1) {
+            break;
+        }
+
         config.application_names[i] = line;
 
         // Copy string remove newline, ensure null terminated.
@@ -58,7 +65,9 @@ struct Config read_config(char *path) {
             // Copy chars from string and deal with new line and null chars.
             if (line[j] == '\n' || line[j] == '\0') {
                 config.application_names[i][j] = '\0';  
-                printf("Constructed a word %s", config.application_names[i]);
+                if (DEBUG) {
+                    printf("Found a program to monitor in config: %s \n", config.application_names[i]);
+                }
                 i++;
                 break;
             } 
