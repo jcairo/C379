@@ -2,3 +2,4 @@
 .*.*.swn 
 .*.*.swo
 memwatch.log
+*logfile

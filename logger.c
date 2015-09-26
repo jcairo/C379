@@ -18,7 +18,16 @@ void get_formatted_time(char *buffer) {
 }
 
 /* Takes a string and logs it to the log file with appropriate formatting */
-void log_message(char *message) {
+void log_message(char *message, int type) {
+    // Set the message type
+    char message_type[BUFFER_LENGTH];
+    if (type == INFO) {
+        strcpy(message_type, "Info: ");
+    }
+    if (type == ACTION){
+        strcpy(message_type, "Action: ");
+    }
+
     // Get log file path
     const char *path = getenv("PROCNANNYLOGS");
     if (path == NULL) {
@@ -30,13 +39,14 @@ void log_message(char *message) {
     if (path[0] == '/') {
         // We have a relative path. 
     }
-
+    
+    // Get the time.
     char formatted_time[BUFFER_LENGTH];
     get_formatted_time(formatted_time);
     
     // Open the file to write to.
     FILE *fp;
     fp = fopen(path, "a");
-    fprintf(fp, "%s%s\n", formatted_time, message);
+    fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);
 }

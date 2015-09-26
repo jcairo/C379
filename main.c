@@ -10,7 +10,7 @@ char main_program_name[] = "procnanny";
 
 int main(int argc, char *argv[]) {
     char test_string[] = "Helo";
-    log_message(test_string);
+    log_message(test_string, INFO);
     // Parse config file
     struct Config config = read_config(argv[1]);
 
