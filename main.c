@@ -9,21 +9,19 @@ char main_program_name[] = "procnanny";
 
 
 int main(int argc, char *argv[]) {
-    char test_string[] = "Helo";
-    log_message(test_string, INFO);
     // Parse config file
     struct Config config = read_config(argv[1]);
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name);
-    if (procnanny_process_group.process_count > 0) {
+    /// if (procnanny_process_group.process_count > 0) {
+    if (1) {
         // Prompt user to quit existing process.
-        
+            prompt_user_for_instructions();        
     }
     
-    struct Process_Group process_group = get_all_processes(config);
+    // struct Process_Group process_group = get_all_processes(config);
 
 
-    return (0);
 }
 

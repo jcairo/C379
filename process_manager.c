@@ -1,11 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <signal.h>
 #include "process_manager.h"
 #include "config_reader.h"
 
 #define DEBUG 0
 #define MAX_CHARS 1000
+
+/* Takes a process group and kills all processes in the group */
+void kill_processes(struct Process_Group process_group) {
+    // Find the pid of the current process so we don't kill it.
+    int current_pid = getpid();
+    int i = 0;
+    for (; i < process_group.process_count-1; i++) {
+        // Make sure we don't kill the current process.
+        if (process_group.process[i].process_id == current_pid) {
+            continue; 
+        }
+        kill(process_group.process[i].process_id, SIGKILL);
+        printf("About to kill process %d", process_group.process[i].process_id);
+
+    } 
+}
 
 /* Iterates through each program to be monitored, calls get pids by name for each
  * and builds a process_group struct with all running processes and returns it.
@@ -52,6 +71,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
         if (read == -1 && i == 0) {
             perror("First line when reading ps aux output is empty");
             process_group.process_count = 0;
+            // Output to log file that no process exsists of this name.
             break;
         }
         
@@ -61,7 +81,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
         }
 
         // Try and parse the pid into an integer
-        int pid = atoi(line);
+        pid_t pid = atoi(line);
         process_group.process[i].process_id = pid;
         strcpy(process_group.process[i].process_name, process_name);
         if (DEBUG) {
