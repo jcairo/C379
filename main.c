@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "user_interaction.h"
 #include "process_manager.h"
 #include "config_reader.h"
@@ -14,12 +15,24 @@ int main(int argc, char *argv[]) {
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name);
-    /// if (procnanny_process_group.process_count > 0) {
-    if (1) {
+    if (procnanny_process_group.process_count > 1) {
         // Prompt user to quit existing process.
-            prompt_user_for_instructions();        
+        int kill = prompt_user_for_instructions();        
+        if (kill) {
+            // Kill the existing procnanny processes.
+            kill_processes(procnanny_process_group);
+        } else {
+            // Exit this instance of procnanny
+            exit(EXIT_FAILURE);
+        }
     }
     
+    while(1) {
+        sleep(1);
+        printf("Tick");
+        fflush(stdout);
+    }
+
     // struct Process_Group process_group = get_all_processes(config);
 
 

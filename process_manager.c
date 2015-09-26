@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <errno.h>
 #include "process_manager.h"
 #include "config_reader.h"
+#include "logger.h"
 
 #define DEBUG 0
 #define MAX_CHARS 1000
@@ -20,9 +22,21 @@ void kill_processes(struct Process_Group process_group) {
         if (process_group.process[i].process_id == current_pid) {
             continue; 
         }
-        kill(process_group.process[i].process_id, SIGKILL);
-        printf("About to kill process %d", process_group.process[i].process_id);
-
+       
+        // Taken from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
+        // September 26, 2015
+        // Make sure the processes are still running and kill them.
+        if (kill(process_group.process[i].process_id, 0) == 0) {
+            // Process is running. Kill it. 
+            kill(process_group.process[i].process_id, SIGKILL);
+            printf("Killed process number %d\n", process_group.process[i].process_id);
+        } else if (errno == ESRCH) {
+            // No process is running
+            printf("No process with pid %d is running", process_group.process[i].process_id);
+        } else {
+            // Some other erro
+            printf("An error occured when trying to kill pid: %d, %s", process_group.process[i].process_id, strerror(errno));
+        }
     } 
 }
 

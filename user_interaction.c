@@ -12,10 +12,14 @@ int prompt_user_for_instructions() {
     scanf(" %c", &response);
     printf("The response was %c\n", response);
     if (response == 'y' || response == 'Y') {
+        printf("Responded yes");
+        fflush(stdout);
         return 1; 
     }
 
     if (response == 'n' || response == 'N') {
+        printf("Responded no");
+        fflush(stdout);
         return 0; 
     }
 

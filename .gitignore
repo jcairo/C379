@@ -3,3 +3,4 @@
 .*.*.swo
 memwatch.log
 *logfile
+.Makefile.*
