@@ -65,7 +65,7 @@ struct Process_Group get_all_processes(struct Config config) {
             total_processes++;
         }
     }
-    aggregated_process_group.process_count = total_processes + 1;        
+    aggregated_process_group.process_count = total_processes;        
     return aggregated_process_group;
 }
 
@@ -104,7 +104,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
         read = getline(&line, &len, fp);
         // If the first read is empty there are no matching processes.
         if (read == -1 && i == 0) {
-            perror("First line when reading ps aux output is empty");
+            printf("No programs called %s found\n", process_name);
             process_group.process_count = 0;
             // Output to log file that no process exsists of this name.
             break;

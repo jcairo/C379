@@ -6,6 +6,8 @@
 #include "logger.h"
 #include "memwatch.h"
 
+#define DEBUG 0
+
 char main_program_name[] = "procnanny";
 
 
@@ -29,7 +31,13 @@ int main(int argc, char *argv[]) {
     // If we got here we are starting the monitoring process with procnanny.
     // Start by getting all the processes requested to be monitored.
     struct Process_Group process_group = get_all_processes(config);
-
+    if (DEBUG) {
+        printf("Total processes found to monitor: %d\n", process_group.process_count);
+        printf("Process to monitor %s, pid %d\n", process_group.process[0].process_name, process_group.process[0].process_id);
+        printf("Process to monitor %s, pid %d\n", process_group.process[1].process_name, process_group.process[1].process_id);
+        printf("Process to monitor %s, pid %d\n", process_group.process[2].process_name, process_group.process[2].process_id);
+        printf("Process to monitor %s, pid %d\n", process_group.process[3].process_name, process_group.process[3].process_id);
+    }
     while(1) {
         sleep(1);
 
