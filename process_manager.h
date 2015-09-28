@@ -6,7 +6,7 @@
 // Represents a process
 struct Process {
     pid_t process_id;       // Pid of the proceess being monitored
-    int process_monitor_id;  // Process monitor pid.
+    pid_t process_monitor_id;  // Process monitor pid.
     char process_name[255];  // Name of process being monitored
     int process_monitored;  // whether process was started to monitor.
 };

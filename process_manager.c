@@ -17,7 +17,7 @@ void kill_processes(struct Process_Group process_group) {
     // Find the pid of the current process so we don't kill it.
     int current_pid = getpid();
     int i = 0;
-    for (; i < process_group.process_count-1; i++) {
+    for (; i < process_group.process_count; i++) {
         // Make sure we don't kill the current process.
         if (process_group.process[i].process_id == current_pid) {
             continue; 

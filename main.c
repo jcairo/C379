@@ -38,9 +38,40 @@ int main(int argc, char *argv[]) {
         printf("Process to monitor %s, pid %d\n", process_group.process[2].process_name, process_group.process[2].process_id);
         printf("Process to monitor %s, pid %d\n", process_group.process[3].process_name, process_group.process[3].process_id);
     }
-    while(1) {
+
+    // Fork all child processes.
+    int i = 0;
+    pid_t child_process_pid;
+    struct Process target;
+    struct Process_Group target_group;
+    for (;i < process_group.process_count; i++) {
+
+        // Set up the target process struct and process group struct to be passed to child.
+        target = process_group.process[i];
+        target_group.process[0] = target;
+        target_group.process_count = 1;
         sleep(1);
 
+        if ((child_process_pid = fork()) < 0) {
+            printf("Error forking process. Exiting...\n");
+            exit(0);
+
+        } else if (child_process_pid == 0) { // Child process after fork.
+            sleep(config.time);
+            kill_processes(target_group);
+            printf("Child process woke up and killed\n");
+            exit(0); 
+
+        }  else { // Parent process after the fork. 
+            // Record monitoring process
+            printf("Forked a process\n");
+            process_group.process[i].process_monitor_id = child_process_pid;
+            process_group.process[i].process_monitored = 1;
+        }
+    }
+
+    while(1) {
+        sleep(1);
         fflush(stdout);
     }
 
