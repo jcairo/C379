@@ -12,7 +12,6 @@ char main_program_name[] = "procnanny";
 int main(int argc, char *argv[]) {
     // Parse config file
     struct Config config = read_config(argv[1]);
-
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name);
     if (procnanny_process_group.process_count > 1) {
@@ -22,19 +21,22 @@ int main(int argc, char *argv[]) {
             // Kill the existing procnanny processes.
             kill_processes(procnanny_process_group);
         } else {
-            // Exit this instance of procnanny
-            exit(EXIT_FAILURE);
+            // Exit this instance of procnanny and let existing instance continue.
+            exit(0);
         }
     }
     
+    // If we got here we are starting the monitoring process with procnanny.
+    // Start by getting all the processes requested to be monitored.
+    struct Process_Group process_group = get_all_processes(config);
+
     while(1) {
         sleep(1);
-        printf("Tick");
+
         fflush(stdout);
     }
 
-    // struct Process_Group process_group = get_all_processes(config);
 
-
+    return 0;
 }
 

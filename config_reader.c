@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "config_reader.h"
 #include <string.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
@@ -32,12 +33,12 @@ struct Config read_config(char *path) {
 
     // Parse time delay.
     int time = atoi(line);
-    // printf("Time delay is %d\n", time);
+    printf("Time delay is %d\n", time);
     config.time = time;
 
     // Read and parse programs to be monitored.
     int i = 0;
-    for (; i < MAX_CONFIG_PROGRAMS;) {
+    for (; i < MAX_CONFIG_PROGRAMS + 1;) {
         read = getline(&line, &len, fp);
 
         // Ensure config file has at least one program to read.
@@ -50,8 +51,8 @@ struct Config read_config(char *path) {
         if (read == -1) {
             break;
         }
-
-        config.application_names[i] = line;
+        
+        strcpy(config.application_names[i], line);
 
         // Copy string remove newline, ensure null terminated.
         int j = 0;
@@ -71,7 +72,7 @@ struct Config read_config(char *path) {
                 i++;
                 break;
             } 
-            config.application_names[i][j] = line[j];
+            // config.application_names[i][j] = line[j];
         }
         
     }

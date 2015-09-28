@@ -7,7 +7,7 @@
 struct Config {
     int application_count;
     int time;
-    char *application_names[MAX_CONFIG_PROGRAMS];
+    char application_names[MAX_CONFIG_PROGRAMS][MAX_CONFIG_CHARS_PER_LINE];
 };
 
 struct Config read_config(char *path);

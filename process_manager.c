@@ -44,7 +44,29 @@ void kill_processes(struct Process_Group process_group) {
  * and builds a process_group struct with all running processes and returns it.
  */
 struct Process_Group get_all_processes(struct Config config) {
+    struct Process_Group aggregated_process_group;
+    aggregated_process_group.process_count = 0;
+    
+    int i = 0;
+    int total_processes = 0;
+    // Iterate through each application name to be monitored.
+    // For each applictation name get all prcesses of that name
+    // place them all into the aggregated process group.
+    for (;i < config.application_count; i++) {
+        printf("Getting Processes named %s\n", config.application_names[i]);
+        struct Process_Group process_group;
+        process_group = get_process_group_by_name(config.application_names[i]);
 
+        // Put processes into the aggregated process group.
+        int j = 0;
+        for (;j < process_group.process_count; j++) {
+            aggregated_process_group.process[total_processes] = process_group.process[j];  
+            printf("Process added to aggregate group, name: %s, pid %d\n", aggregated_process_group.process[total_processes].process_name, aggregated_process_group.process[total_processes].process_id);
+            total_processes++;
+        }
+    }
+    aggregated_process_group.process_count = total_processes + 1;        
+    return aggregated_process_group;
 }
 
 
@@ -69,9 +91,8 @@ struct Process_Group get_process_group_by_name(char *process_name) {
     strcat(command, process_name);
     
     // Run the command.
-    printf("%s\n", command);
     fp = popen(command, "r");
-    printf("Main program name is %s\n", process_name);  
+    printf("Program name to monitor is %s\n", process_name);  
     if (fp == NULL) {
         printf("Error during popen of ps aux command."); 
         exit(EXIT_FAILURE);
