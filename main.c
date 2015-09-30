@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
         int kill = prompt_user_for_instructions();        
         if (kill) {
             // Kill the existing procnanny processes.
-            kill_processes(procnanny_process_group);
+            kill_processes(procnanny_process_group, config);
         } else {
             // Exit this instance of procnanny and let existing instance continue.
             exit(0);
@@ -52,8 +52,7 @@ int main(int argc, char *argv[]) {
 
         } else if (child_process_pid == 0) { // Child process after fork.
             sleep(config.time);
-            kill_processes(target_group);
-            printf("Child process woke up and killed\n");
+            kill_processes(target_group, config);
             exit(0); 
 
         }  else { // Parent process after the fork. 
@@ -66,11 +65,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    while(1) {
-        sleep(1);
-        fflush(stdout);
-    }
-
+    fflush(stdout);
+    sleep(config.time + 1);
+    char terminal_message[512];
+    sprintf(terminal_message, "Exiting. %d process(es) killed.", process_group.process_count);
+    log_message(terminal_message, INFO);
 
     return 0;
 }

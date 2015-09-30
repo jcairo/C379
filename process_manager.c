@@ -13,7 +13,7 @@
 #define MAX_CHARS 1000
 
 /* Takes a process group and kills all processes in the group */
-void kill_processes(struct Process_Group process_group) {
+void kill_processes(struct Process_Group process_group, struct Config config) {
     // Find the pid of the current process so we don't kill it.
     int current_pid = getpid();
     int i = 0;
@@ -29,13 +29,18 @@ void kill_processes(struct Process_Group process_group) {
         if (kill(process_group.process[i].process_id, 0) == 0) {
             // Process is running. Kill it. 
             kill(process_group.process[i].process_id, SIGKILL);
-            printf("Killed process number %d\n", process_group.process[i].process_id);
+            char message[512];
+            sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
+            log_message(message, ACTION);
         } else if (errno == ESRCH) {
             // No process is running
-            printf("No process with pid %d is running", process_group.process[i].process_id);
+            if (DEBUG) {
+                printf("No process with pid %d is running", process_group.process[i].process_id);
+            }
         } else {
             // Some other erro
-            printf("An error occured when trying to kill pid: %d, %s", process_group.process[i].process_id, strerror(errno));
+            printf("An error occured when trying to kill pid: %d, %s exiting...", process_group.process[i].process_id, strerror(errno));
+            exit(EXIT_FAILURE);
         }
     } 
 }

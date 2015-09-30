@@ -19,7 +19,7 @@ struct Process_Group {
     struct Process process[MAX_PROCESSES];
 };
 
-void kill_processes(struct Process_Group process_group);
+void kill_processes(struct Process_Group process_group, struct Config config); 
 struct Process_Group get_process_group_by_name(char *process_name);
 struct Process_Group get_all_processes(struct Config config);
 int proc_nanny_running();
