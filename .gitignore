@@ -4,3 +4,4 @@
 memwatch.log
 *logfile
 .Makefile.*
+.*nfs*

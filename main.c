@@ -27,18 +27,12 @@ int main(int argc, char *argv[]) {
             exit(0);
         }
     }
-    
+    clear_log_file();
+
     // If we got here we are starting the monitoring process with procnanny.
     // Start by getting all the processes requested to be monitored.
     struct Process_Group process_group = get_all_processes(config);
-    if (DEBUG) {
-        printf("Total processes found to monitor: %d\n", process_group.process_count);
-        printf("Process to monitor %s, pid %d\n", process_group.process[0].process_name, process_group.process[0].process_id);
-        printf("Process to monitor %s, pid %d\n", process_group.process[1].process_name, process_group.process[1].process_id);
-        printf("Process to monitor %s, pid %d\n", process_group.process[2].process_name, process_group.process[2].process_id);
-        printf("Process to monitor %s, pid %d\n", process_group.process[3].process_name, process_group.process[3].process_id);
-    }
-
+    
     // Fork all child processes.
     int i = 0;
     pid_t child_process_pid;
@@ -54,7 +48,7 @@ int main(int argc, char *argv[]) {
 
         if ((child_process_pid = fork()) < 0) {
             printf("Error forking process. Exiting...\n");
-            exit(0);
+            exit(EXIT_FAILURE);
 
         } else if (child_process_pid == 0) { // Child process after fork.
             sleep(config.time);
@@ -64,7 +58,9 @@ int main(int argc, char *argv[]) {
 
         }  else { // Parent process after the fork. 
             // Record monitoring process
-            printf("Forked a process\n");
+            char message[512];
+            sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[i].process_name, process_group.process[i].process_id);
+            log_message(message, INFO);
             process_group.process[i].process_monitor_id = child_process_pid;
             process_group.process[i].process_monitored = 1;
         }

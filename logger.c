@@ -7,6 +7,7 @@
 #define DEBUG 1
 #define BUFFER_LENGTH 256
 
+
 /* Returns a formatted string */
 void get_formatted_time(char *buffer) {
     // Get the time
@@ -15,6 +16,26 @@ void get_formatted_time(char *buffer) {
     time(&rawtime);
     info = localtime(&rawtime);
     strftime(buffer, BUFFER_LENGTH, "[%a %b %d %X %Z %Y] ", info);
+}
+
+/* Clears the existing log file */
+void clear_log_file() {
+    // Get log file path
+    char *path = getenv("PROCNANNYLOGS");
+    printf("PROCNANNYLOGS in clear_log_file function: %s\n", path); 
+    if (path == NULL) {
+        printf("Error when reading PROCNANNYLOGS variable.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Determine whether we have a relative or absolute path.
+    //if (path[0] == '/') {
+    //    // We have a relative path. 
+    //}
+
+    FILE *fp;
+    fp = fopen(path, "w");
+    fclose(fp);
 }
 
 /* Takes a string and logs it to the log file with appropriate formatting */
@@ -29,16 +50,16 @@ void log_message(char *message, int type) {
     }
 
     // Get log file path
-    const char *path = getenv("PROCNANNYLOGS");
+    char *path = getenv("PROCNANNYLOGS");
     if (path == NULL) {
-        printf("Error when reading path to procnanny log file.");
+        printf("Error when reading path to procnanny log file.\n");
         exit(EXIT_FAILURE);
     }
 
     // Determine whether we have a relative or absolute path.
-    if (path[0] == '/') {
-        // We have a relative path. 
-    }
+    //if (path[0] == '/') {
+    //    // We have a relative path. 
+    //}
     
     // Get the time.
     char formatted_time[BUFFER_LENGTH];

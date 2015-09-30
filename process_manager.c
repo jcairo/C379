@@ -53,7 +53,9 @@ struct Process_Group get_all_processes(struct Config config) {
     // For each applictation name get all prcesses of that name
     // place them all into the aggregated process group.
     for (;i < config.application_count; i++) {
-        printf("Getting Processes named %s\n", config.application_names[i]);
+        if (DEBUG) {
+            printf("Getting Processes named %s\n", config.application_names[i]);
+        }
         struct Process_Group process_group;
         process_group = get_process_group_by_name(config.application_names[i]);
 
@@ -61,7 +63,9 @@ struct Process_Group get_all_processes(struct Config config) {
         int j = 0;
         for (;j < process_group.process_count; j++) {
             aggregated_process_group.process[total_processes] = process_group.process[j];  
-            printf("Process added to aggregate group, name: %s, pid %d\n", aggregated_process_group.process[total_processes].process_name, aggregated_process_group.process[total_processes].process_id);
+            if (DEBUG) {
+                printf("Process added to aggregate group, name: %s, pid %d\n", aggregated_process_group.process[total_processes].process_name, aggregated_process_group.process[total_processes].process_id);
+            }
             total_processes++;
         }
     }
@@ -92,7 +96,9 @@ struct Process_Group get_process_group_by_name(char *process_name) {
     
     // Run the command.
     fp = popen(command, "r");
-    printf("Program name to monitor is %s\n", process_name);  
+    if (DEBUG) {
+        printf("Program name to monitor is %s\n", process_name);  
+    }
     if (fp == NULL) {
         printf("Error during popen of ps aux command."); 
         exit(EXIT_FAILURE);
@@ -104,7 +110,9 @@ struct Process_Group get_process_group_by_name(char *process_name) {
         read = getline(&line, &len, fp);
         // If the first read is empty there are no matching processes.
         if (read == -1 && i == 0) {
-            printf("No programs called %s found\n", process_name);
+            char message[512];
+            sprintf(message, "No '%s' processes found.", process_name);
+            log_message(message, INFO);
             process_group.process_count = 0;
             // Output to log file that no process exsists of this name.
             break;

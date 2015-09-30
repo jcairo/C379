@@ -4,7 +4,7 @@
 #include "config_reader.h"
 #include <string.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
@@ -33,7 +33,9 @@ struct Config read_config(char *path) {
 
     // Parse time delay.
     int time = atoi(line);
-    printf("Time delay is %d\n", time);
+    if (DEBUG) {
+        printf("Time delay is %d\n", time);
+    }
     config.time = time;
 
     // Read and parse programs to be monitored.

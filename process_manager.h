@@ -3,18 +3,20 @@
 #include <sys/types.h>
 #include "config_reader.h"
 
+#define MAX_LINE_LENGTH 256
+#define MAX_PROCESSES 1024
 // Represents a process
 struct Process {
     pid_t process_id;       // Pid of the proceess being monitored
     pid_t process_monitor_id;  // Process monitor pid.
-    char process_name[255];  // Name of process being monitored
+    char process_name[MAX_LINE_LENGTH];  // Name of process being monitored
     int process_monitored;  // whether process was started to monitor.
 };
 
 // Represents a collection of processes
 struct Process_Group {
     int process_count;
-    struct Process process[128];
+    struct Process process[MAX_PROCESSES];
 };
 
 void kill_processes(struct Process_Group process_group);
