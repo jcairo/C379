@@ -35,7 +35,7 @@ void kill_processes(struct Process_Group process_group, struct Config config) {
         } else if (errno == ESRCH) {
             // No process is running
             if (DEBUG) {
-                printf("No process with pid %d is running", process_group.process[i].process_id);
+                printf("No process with pid %d is running. Child monitoring process exited without killing.\n", process_group.process[i].process_id);
             }
         } else {
             // Some other erro
@@ -156,4 +156,47 @@ int proc_running(char *process_name) {
     } else {
         return 0; 
     }
+}
+
+int get_total_processes_killed() {
+    char *path = getenv("PROCNANNYLOGS");
+    if (DEBUG) {
+        printf("PROCNANNYLOGS in get_total_processes_killed function path is: %s\n", path); 
+    }
+    if (path == NULL) {
+        printf("Error when reading PROCNANNYLOGS variable.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // File reading variables.
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    char buffer[MAX_CHARS];
+    
+    // Command
+    char command[512] = {'\0'};
+    char command_prefix[] = "grep -c 'killed' ";
+    strcat(command, command_prefix);
+    strcat(command, path);
+    
+    // Run the command.
+    fp = popen(command, "r");
+    if (DEBUG) {
+        printf("Searched logfile for killed processes.\n");  
+    }
+    if (fp == NULL) {
+        printf("Error when reading log file to find total processes killed.\n"); 
+        exit(EXIT_FAILURE);
+    }
+    
+    // Read the line returned from the grep command.
+    read = getline(&line, &len, fp);
+    if (read == -1) {
+        printf("Error when grepping killed proccess total from log file.\n");
+    }
+    int total_processes_killed = atoi(line);
+    return total_processes_killed;
+    
 }

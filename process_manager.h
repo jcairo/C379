@@ -19,6 +19,8 @@ struct Process_Group {
     struct Process process[MAX_PROCESSES];
 };
 
+
+int get_total_processes_killed();
 void kill_processes(struct Process_Group process_group, struct Config config); 
 struct Process_Group get_process_group_by_name(char *process_name);
 struct Process_Group get_all_processes(struct Config config);

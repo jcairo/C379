@@ -66,9 +66,12 @@ int main(int argc, char *argv[]) {
     }
 
     fflush(stdout);
+    // Wait until the time specified has elapsed, then examine the log file to see
+    // how many processes were killed.
     sleep(config.time + 1);
+    int processes_killed = get_total_processes_killed();
     char terminal_message[512];
-    sprintf(terminal_message, "Exiting. %d process(es) killed.", process_group.process_count);
+    sprintf(terminal_message, "Exiting. %d process(es) killed.", processes_killed);
     log_message(terminal_message, INFO);
 
     return 0;
