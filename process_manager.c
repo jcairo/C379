@@ -86,7 +86,6 @@ struct Process_Group get_process_group_by_name(char *process_name) {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    char buffer[MAX_CHARS];
 
     // Process Group struct to return.
     struct Process_Group process_group;
@@ -173,7 +172,6 @@ int get_total_processes_killed() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    char buffer[MAX_CHARS];
     
     // Command
     char command[512] = {'\0'};

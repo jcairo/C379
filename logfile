@@ -1,17 +1,4 @@
-[Thu Oct 01 16:44:19 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 23354).
-[Thu Oct 01 16:44:20 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 23355).
-[Thu Oct 01 16:44:21 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 23357).
-[Thu Oct 01 16:44:22 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 23358).
-[Thu Oct 01 16:44:23 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 23360).
-[Thu Oct 01 16:44:24 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 23361).
-[Thu Oct 01 16:44:25 MDT 2015]  Info: Initializing monitoring of process 'a.out' (PID 23362).
-[Thu Oct 01 16:44:26 MDT 2015]  Info: Initializing monitoring of process 'a.out' (PID 23363).
-[Thu Oct 01 16:44:27 MDT 2015]  Info: Initializing monitoring of process 'a.out' (PID 23364).
-[Thu Oct 01 16:44:39 MDT 2015]  Action: PID 23354 (test1) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:40 MDT 2015]  Action: PID 23355 (test1) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:41 MDT 2015]  Action: PID 23357 (test1) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:44 MDT 2015]  Action: PID 23361 (test2) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:45 MDT 2015]  Action: PID 23362 (a.out) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:46 MDT 2015]  Action: PID 23363 (a.out) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:47 MDT 2015]  Action: PID 23364 (a.out) killed after exceeding 20 seconds.
-[Thu Oct 01 16:44:48 MDT 2015]  Info: Exiting. 7 process(es) killed.
+[Mon Oct 05 09:37:44 MDT 2015]  Info: No 'test1' processes found.
+[Mon Oct 05 09:37:44 MDT 2015]  Info: No 'test2' processes found.
+[Mon Oct 05 09:37:44 MDT 2015]  Info: No 'a.out' processes found.
+[Mon Oct 05 09:37:46 MDT 2015]  Info: Exiting. 0 process(es) killed.
