@@ -30,7 +30,7 @@ void kill_processes(struct Process_Group process_group, struct Config config) {
             // Process is running. Kill it. 
             kill(process_group.process[i].process_id, SIGKILL);
             char message[512];
-            sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
+            sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
             log_message(message, ACTION);
         } else if (errno == ESRCH) {
             // No process is running

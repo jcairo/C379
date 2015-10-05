@@ -1,3 +1,14 @@
-[Mon Oct 05 09:55:52 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 12979).
-[Mon Oct 05 09:55:53 MDT 2015]  Action: PID 12979 (test1) killed after exceeding 1 seconds.
-[Mon Oct 05 09:55:54 MDT 2015]  Info: Exiting. 1 process(es) killed.
+[Mon Oct 05 10:55:27 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 16953).
+[Mon Oct 05 10:55:28 MDT 2015]  Info: Initializing monitoring of process 'test1' (PID 16954).
+[Mon Oct 05 10:55:29 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 12981).
+[Mon Oct 05 10:55:30 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 16956).
+[Mon Oct 05 10:55:31 MDT 2015]  Info: Initializing monitoring of process 'test2' (PID 16957).
+[Mon Oct 05 10:55:32 MDT 2015]  Info: Initializing monitoring of process 'a.out' (PID 16958).
+[Mon Oct 05 10:55:33 MDT 2015]  Info: Initializing monitoring of process 'a.out' (PID 16959).
+[Mon Oct 05 10:55:48 MDT 2015]  Action: PID 16954(test1) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:49 MDT 2015]  Action: PID 12981(test2) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:50 MDT 2015]  Action: PID 16956(test2) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:51 MDT 2015]  Action: PID 16957(test2) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:52 MDT 2015]  Action: PID 16958(a.out) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:53 MDT 2015]  Action: PID 16959(a.out) killed after exceeding 20 seconds.
+[Mon Oct 05 10:55:54 MDT 2015]  Info: Exiting. 6 process(es) killed.
