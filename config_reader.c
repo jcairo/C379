@@ -61,7 +61,9 @@ struct Config read_config(char *path) {
         for (;;j++) {
             // Make sure we don't have an empty line.
             if (strlen(line) == 1) {
-                printf("Line length was zero");
+                if (DEBUG) {
+                    printf("Line length was zero\n");
+                }
                 break; 
             }
 

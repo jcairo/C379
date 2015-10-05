@@ -1,0 +1,28 @@
+Jonathan Cairo
+1018148
+jcairo
+LEC A1
+Paul Lu
+LAB D01
+
+
+Description:
+The intention of procnanny is to monitor a list of user specified processes for a user specified amount of time.
+The program reads the user specifications in the nanny.config file.
+It then fork a child process for each user specified processes that exists.
+These children sleep for the user specified period of time.
+Upon being awakened they check to see if the process they are set to monitor still exists.
+If so they kill the process and report it in the logfile.
+Once all children have done this the parent procnanny process counts how many processes were killed and logs the number.
+The program as then shut down.
+
+Relevant Commands:
+Type make at the command line to build procnanny.
+Type make clean to clear out .o and the procnanny executable.
+Type ./procnanny nanny.config to execute the program
+Ensure the unix env variable PROCNANNYLOGS is set to the location of the logfile.
+
+Sources:
+config_reader.c file reading code taken from http://stackoverflow.com/questions/3501338/c-read-file-line-by-line
+process_manader.c process status code take from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
+

@@ -22,7 +22,6 @@ void get_formatted_time(char *buffer) {
 void clear_log_file() {
     // Get log file path
     char *path = getenv("PROCNANNYLOGS");
-    printf("PROCNANNYLOGS in clear_log_file function: %s\n", path); 
     if (path == NULL) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
         exit(EXIT_FAILURE);
