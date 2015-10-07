@@ -92,13 +92,15 @@ struct Process_Group get_process_group_by_name(char *process_name) {
     struct Process_Group process_group;
 
     // Construct the required command.
-    char command_prefix[] = "ps aux | pgrep ";
+    char command_prefix[] = "pidof ";
+    char command_postfix[] = " | tr ' ' '\n'";
 
     // Concat the command components.
     char command[512] = {'\0'};
     strcat(command, command_prefix);
     strcat(command, process_name);
-    
+    strcat(command, command_postfix);
+
     // Run the command.
     fp = popen(command, "r");
     if (DEBUG) {
