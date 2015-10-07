@@ -65,7 +65,6 @@ int main(int argc, char *argv[]) {
             sleep(config.time);
             char process_log_file_path[256];
             pid_t child_process_pid = getpid();    
-            printf("Child process pid is %d in child process.\n", child_process_pid);
             sprintf(process_log_file_path, "%s%d", ".", child_process_pid); 
             kill_processes(target_group, config, process_log_file_path);
             exit(0); 

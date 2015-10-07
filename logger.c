@@ -4,7 +4,7 @@
 #include <time.h>
 #include "logger.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define BUFFER_LENGTH 256
 
 
@@ -81,12 +81,19 @@ void aggregate_log_files(struct Process_Group process_group, char *main_log_file
         ssize_t read;
 
         // Open the file.
-        printf("Process log file id to be openend is %s\n", process_group.process[i].process_log_file_path);
-        printf("Length of the process file sting is %ld\n", strlen(process_group.process[i].process_log_file_path));
+        if (DEBUG) {
+            printf("Process log file id to be openend is %s\n", process_group.process[i].process_log_file_path);
+            printf("Length of the process file sting is %ld\n", strlen(process_group.process[i].process_log_file_path));
+
+        }
+
         fp = fopen(process_group.process[i].process_log_file_path, "r");
         if (fp == NULL) {
-            printf("Error when opening process log file.\n"); 
-            exit(EXIT_FAILURE);
+            // No file exists by this name. Meaning the process was killed before
+            // the killer child process had a chance to kill it so no log file was made.
+            continue;
+            // printf("Error when opening process log file.\n"); 
+            // exit(EXIT_FAILURE);
         }
 
         // Read the log message.
@@ -101,7 +108,9 @@ void aggregate_log_files(struct Process_Group process_group, char *main_log_file
     
         // If there was a line of info in the file print it to the main log file.
         fp = fopen(main_log_file_path, "a");
-        printf("The line read from process log file was %s\n", line);
+        if (DEBUG) {
+            printf("The line read from process log file was %s\n", line);
+        }
         fprintf(fp,"%s", line);
         fclose(fp);
         
