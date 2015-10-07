@@ -13,10 +13,11 @@
 #define MAX_CHARS 1000
 
 /* Takes a process group and kills all processes in the group */
-void kill_processes(struct Process_Group process_group, struct Config config) {
+void kill_processes(struct Process_Group process_group, struct Config config, char *log_file_path) {
     // Find the pid of the current process so we don't kill it.
     int current_pid = getpid();
     int i = 0;
+
     for (; i < process_group.process_count; i++) {
         // Make sure we don't kill the current process.
         if (process_group.process[i].process_id == current_pid) {
@@ -31,7 +32,7 @@ void kill_processes(struct Process_Group process_group, struct Config config) {
             kill(process_group.process[i].process_id, SIGKILL);
             char message[512];
             sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
-            log_message(message, ACTION);
+            log_message(message, ACTION, log_file_path);
         } else if (errno == ESRCH) {
             // No process is running
             if (DEBUG) {
@@ -116,7 +117,12 @@ struct Process_Group get_process_group_by_name(char *process_name) {
         if (read == -1 && i == 0) {
             char message[512];
             sprintf(message, "No '%s' processes found.", process_name);
-            log_message(message, INFO);
+            char *main_log_file_path = getenv("PROCNANNYLOGS");
+            if (main_log_file_path == NULL) {
+                printf("Error when reading PROCNANNYLOGS variable.\n");
+                exit(EXIT_FAILURE);
+            }
+            log_message(message, INFO, main_log_file_path);
             process_group.process_count = 0;
             // Output to log file that no process exsists of this name.
             break;

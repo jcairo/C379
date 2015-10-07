@@ -38,7 +38,7 @@ void clear_log_file() {
 }
 
 /* Takes a string and logs it to the log file with appropriate formatting */
-void log_message(char *message, int type) {
+void log_message(char *message, int type, char *log_file_path) {
     // Set the message type
     char message_type[BUFFER_LENGTH];
     if (type == INFO) {
@@ -49,11 +49,11 @@ void log_message(char *message, int type) {
     }
 
     // Get log file path
-    char *path = getenv("PROCNANNYLOGS");
-    if (path == NULL) {
-        printf("Error when reading path to procnanny log file.\n");
-        exit(EXIT_FAILURE);
-    }
+    //char *path = getenv("PROCNANNYLOGS");
+    //if (path == NULL) {
+    //    printf("Error when reading path to procnanny log file.\n");
+    //    exit(EXIT_FAILURE);
+    //}
 
     // Determine whether we have a relative or absolute path.
     //if (path[0] == '/') {
@@ -66,7 +66,46 @@ void log_message(char *message, int type) {
     
     // Open the file to write to.
     FILE *fp;
-    fp = fopen(path, "a");
+    fp = fopen(log_file_path, "a");
     fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);
+}
+
+/* Aggregates the logfiles from each killer child process */
+void aggregate_log_files(struct Process_Group process_group, char *main_log_file_path) {
+    int i = 0;
+    for (; i < process_group.process_count; i++) {
+        FILE *fp;
+        char *line = NULL;
+        size_t len = 0;
+        ssize_t read;
+
+        // Open the file.
+        printf("Process log file id to be openend is %s\n", process_group.process[i].process_log_file_path);
+        printf("Length of the process file sting is %ld\n", strlen(process_group.process[i].process_log_file_path));
+        fp = fopen(process_group.process[i].process_log_file_path, "r");
+        if (fp == NULL) {
+            printf("Error when opening process log file.\n"); 
+            exit(EXIT_FAILURE);
+        }
+
+        // Read the log message.
+        read = getline(&line, &len, fp); 
+        fclose(fp);
+
+        if (read == -1) {
+            // No output from process. It did not kill its target.
+            remove(process_group.process[i].process_log_file_path);
+            continue;
+        }
+    
+        // If there was a line of info in the file print it to the main log file.
+        fp = fopen(main_log_file_path, "a");
+        printf("The line read from process log file was %s\n", line);
+        fprintf(fp,"%s", line);
+        fclose(fp);
+        
+        // Remove the process log file.
+        remove(process_group.process[i].process_log_file_path);
+    }
 }

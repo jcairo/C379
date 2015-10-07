@@ -11,6 +11,7 @@ struct Process {
     pid_t process_monitor_id;  // Process monitor pid.
     char process_name[MAX_LINE_LENGTH];  // Name of process being monitored
     int process_monitored;  // whether process was started to monitor.
+    char process_log_file_path[256]; // The path to the monitoring child processes log file.
 };
 
 // Represents a collection of processes
@@ -21,7 +22,7 @@ struct Process_Group {
 
 
 int get_total_processes_killed();
-void kill_processes(struct Process_Group process_group, struct Config config); 
+void kill_processes(struct Process_Group process_group, struct Config config, char *log_file_path); 
 struct Process_Group get_process_group_by_name(char *process_name);
 struct Process_Group get_all_processes(struct Config config);
 int proc_nanny_running();
