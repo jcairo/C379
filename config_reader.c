@@ -20,29 +20,16 @@ struct Config read_config(char *path) {
     // Open the file.
     fp = fopen(path, "r");
     if (fp == NULL) {
-        perror("Error when opening config file"); 
+        perror("Error when opening config file");
         exit(EXIT_FAILURE);
     }
-
-    // Read the time delay.
-    read = getline(&line, &len, fp); 
-    if (read == -1) {
-        perror("getline performed on config file found empty first line.");
-        exit(EXIT_FAILURE);
-    }
-
-    // Parse time delay.
-    int time = atoi(line);
-    if (DEBUG) {
-        printf("Time delay is %d\n", time);
-    }
-    config.time = time;
 
     // Read and parse programs to be monitored.
     int i = 0;
-    for (; i < MAX_CONFIG_PROGRAMS + 1;) {
+    for (; i < MAX_CONFIG_PROGRAMS + 1; i++) {
         read = getline(&line, &len, fp);
 
+        printf("Read line %s\n", line);
         // Ensure config file has at least one program to read.
         if (read == -1 && i == 0) {
             perror("No programs to monitor found in the config file. Procnanny will not run\n");
@@ -53,36 +40,23 @@ struct Config read_config(char *path) {
         if (read == -1) {
             break;
         }
-        
-        strcpy(config.application_names[i], line);
 
-        // Copy string remove newline, ensure null terminated.
-        int j = 0;
-        for (;;j++) {
-            // Make sure we don't have an empty line.
-            if (strlen(line) == 1) {
-                if (DEBUG) {
-                    printf("Line length was zero\n");
-                }
-                break; 
-            }
+        // Split string on whitespace.
+        char *pch;
+        // Get application name.
+        pch = strtok(line, " ");
+        strcpy(config.application_names[i], pch);
+        printf("Program name read in config %s\n", config.application_names[i]);
 
-            // Copy chars from string and deal with new line and null chars.
-            if (line[j] == '\n' || line[j] == '\0') {
-                config.application_names[i][j] = '\0';  
-                if (DEBUG) {
-                    printf("Found a program to monitor in config: %s \n", config.application_names[i]);
-                }
-                i++;
-                break;
-            } 
-            // config.application_names[i][j] = line[j];
-        }
-        
+        // Get timeout time.
+        pch = strtok(NULL, " ");
+        config.application_timeout[i] = atoi(pch);
+        printf("Program timeout read in config %d\n", config.application_timeout[i]);
     }
 
     // Set total application count.
     config.application_count = i;
+    printf("Read a total of %d programs\n", i);
     fclose(fp);
     return config;
 };

@@ -12,6 +12,26 @@
 #define DEBUG 0
 #define MAX_CHARS 1000
 
+/* Takes a process id and kills it */
+void kill_process(int pid) {
+    // Taken from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
+    // September 26, 2015
+    // Make sure the processes are still running and kill them.
+    if (kill(pid, 0) == 0) {
+        // Process is running. Kill it.
+        kill(pid, SIGKILL);
+    } else if (errno == ESRCH) {
+        // No process is running
+        if (DEBUG) {
+            printf("No process with pid %d is running. Child monitoring process did not kill desired process.\n", pid);
+        }
+    } else {
+        // Some other erro
+        printf("An error occured when trying to kill pid: %d, %s exiting...", pid, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+}
+
 /* Takes a process group and kills all processes in the group */
 void kill_processes(struct Process_Group process_group, struct Config config, char *log_file_path) {
     // Find the pid of the current process so we don't kill it.
@@ -21,17 +41,17 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
     for (; i < process_group.process_count; i++) {
         // Make sure we don't kill the current process.
         if (process_group.process[i].process_id == current_pid) {
-            continue; 
+            continue;
         }
-       
+
         // Taken from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
         // September 26, 2015
         // Make sure the processes are still running and kill them.
         if (kill(process_group.process[i].process_id, 0) == 0) {
-            // Process is running. Kill it. 
+            // Process is running. Kill it.
             kill(process_group.process[i].process_id, SIGKILL);
             char message[512];
-            sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
+            // sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
             log_message(message, ACTION, log_file_path);
         } else if (errno == ESRCH) {
             // No process is running
@@ -43,7 +63,7 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
             printf("An error occured when trying to kill pid: %d, %s exiting...", process_group.process[i].process_id, strerror(errno));
             exit(EXIT_FAILURE);
         }
-    } 
+    }
 }
 
 /* Iterates through each program to be monitored, calls get pids by name for each
@@ -52,7 +72,7 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
 struct Process_Group get_all_processes(struct Config config) {
     struct Process_Group aggregated_process_group;
     aggregated_process_group.process_count = 0;
-    
+
     int i = 0;
     int total_processes = 0;
     // Iterate through each application name to be monitored.
@@ -68,14 +88,14 @@ struct Process_Group get_all_processes(struct Config config) {
         // Put processes into the aggregated process group.
         int j = 0;
         for (;j < process_group.process_count; j++) {
-            aggregated_process_group.process[total_processes] = process_group.process[j];  
+            aggregated_process_group.process[total_processes] = process_group.process[j];
             if (DEBUG) {
                 printf("Process added to aggregate group, name: %s, pid %d\n", aggregated_process_group.process[total_processes].process_name, aggregated_process_group.process[total_processes].process_id);
             }
             total_processes++;
         }
     }
-    aggregated_process_group.process_count = total_processes;        
+    aggregated_process_group.process_count = total_processes;
     return aggregated_process_group;
 }
 
@@ -104,10 +124,10 @@ struct Process_Group get_process_group_by_name(char *process_name) {
     // Run the command.
     fp = popen(command, "r");
     if (DEBUG) {
-        printf("Program name to monitor is %s\n", process_name);  
+        printf("Program name to monitor is %s\n", process_name);
     }
     if (fp == NULL) {
-        printf("Error during popen of ps aux command."); 
+        printf("Error during popen of ps aux command.");
         exit(EXIT_FAILURE);
     }
 
@@ -129,7 +149,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
             // Output to log file that no process exsists of this name.
             break;
         }
-        
+
         // End of file reached.
         if (read == -1) {
             break;
@@ -161,14 +181,14 @@ int proc_running(char *process_name) {
         // At least one procnanny process is running.
         return 1;
     } else {
-        return 0; 
+        return 0;
     }
 }
 
 int get_total_processes_killed() {
     char *path = getenv("PROCNANNYLOGS");
     if (DEBUG) {
-        printf("PROCNANNYLOGS in get_total_processes_killed function path is: %s\n", path); 
+        printf("PROCNANNYLOGS in get_total_processes_killed function path is: %s\n", path);
     }
     if (path == NULL) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
@@ -180,23 +200,23 @@ int get_total_processes_killed() {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    
+
     // Command
     char command[512] = {'\0'};
     char command_prefix[] = "grep -c 'killed' ";
     strcat(command, command_prefix);
     strcat(command, path);
-    
+
     // Run the command.
     fp = popen(command, "r");
     if (DEBUG) {
-        printf("Searched logfile for killed processes.\n");  
+        printf("Searched logfile for killed processes.\n");
     }
     if (fp == NULL) {
-        printf("Error when reading log file to find total processes killed.\n"); 
+        printf("Error when reading log file to find total processes killed.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     // Read the line returned from the grep command.
     read = getline(&line, &len, fp);
     if (read == -1) {
@@ -204,5 +224,5 @@ int get_total_processes_killed() {
     }
     int total_processes_killed = atoi(line);
     return total_processes_killed;
-    
+
 }
