@@ -7,12 +7,12 @@
 #define MAX_PROCESSES 1024
 // Represents a process
 struct Process {
+    int time_to_kill; // Time the process should be killed in
     int fd[2];  // Pipe to child process.
     int busy;   // Whether the child process is waiting to kill a process or not.
     pid_t process_id;       // Pid of the proceess being monitored
-    pid_t process_monitor_id;  // Child Process pid.
+    pid_t process_monitor_id;  // Child Process monitoring the desired process pid.
     char process_name[MAX_LINE_LENGTH];  // Name of process being monitored
-    int process_monitored;  // whether process was started to monitor.
     char process_log_file_path[256]; // The path to the monitoring child processes log file.
 };
 
@@ -22,11 +22,11 @@ struct Process_Group {
     struct Process process[MAX_PROCESSES];
 };
 
-
+int is_monitored(int pid, struct Process_Group process_group);
 int get_total_processes_killed();
-void kill_process(int pid);
+int kill_process(int pid);
 void kill_processes(struct Process_Group process_group, struct Config config, char *log_file_path);
-struct Process_Group get_process_group_by_name(char *process_name);
+struct Process_Group get_process_group_by_name(char *process_name, int time_to_kill);
 struct Process_Group get_all_processes(struct Config config);
 int proc_nanny_running();
 

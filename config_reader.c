@@ -29,7 +29,9 @@ struct Config read_config(char *path) {
     for (; i < MAX_CONFIG_PROGRAMS + 1; i++) {
         read = getline(&line, &len, fp);
 
-        printf("Read line %s\n", line);
+        if (DEBUG) {
+            printf("Read line %s\n", line);
+        }
         // Ensure config file has at least one program to read.
         if (read == -1 && i == 0) {
             perror("No programs to monitor found in the config file. Procnanny will not run\n");
@@ -46,17 +48,23 @@ struct Config read_config(char *path) {
         // Get application name.
         pch = strtok(line, " ");
         strcpy(config.application_names[i], pch);
-        printf("Program name read in config %s\n", config.application_names[i]);
+        if (DEBUG) {
+            printf("Program name read in config %s\n", config.application_names[i]);
+        }
 
         // Get timeout time.
         pch = strtok(NULL, " ");
         config.application_timeout[i] = atoi(pch);
-        printf("Program timeout read in config %d\n", config.application_timeout[i]);
+        if (DEBUG) {
+            printf("Program timeout read in config %d\n", config.application_timeout[i]);
+        }
     }
 
     // Set total application count.
     config.application_count = i;
-    printf("Read a total of %d programs\n", i);
+    if (DEBUG) {
+        printf("Read a total of %d programs\n", i);
+    }
     fclose(fp);
     return config;
 };

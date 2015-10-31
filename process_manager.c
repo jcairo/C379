@@ -12,19 +12,33 @@
 #define DEBUG 0
 #define MAX_CHARS 1000
 
+/* Checks whether a process id is already monitored by a child */
+int is_monitored(int pid, struct Process_Group process_group) {
+    int i = 0;
+    for (;i < process_group.process_count; i++) {
+        if (pid == process_group.process[i].process_id) {
+            // The process is already being monitored
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Takes a process id and kills it */
-void kill_process(int pid) {
+int kill_process(int pid) {
     // Taken from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
     // September 26, 2015
     // Make sure the processes are still running and kill them.
     if (kill(pid, 0) == 0) {
         // Process is running. Kill it.
         kill(pid, SIGKILL);
+        return 1;
     } else if (errno == ESRCH) {
         // No process is running
         if (DEBUG) {
             printf("No process with pid %d is running. Child monitoring process did not kill desired process.\n", pid);
         }
+        return 0;
     } else {
         // Some other erro
         printf("An error occured when trying to kill pid: %d, %s exiting...", pid, strerror(errno));
@@ -83,7 +97,7 @@ struct Process_Group get_all_processes(struct Config config) {
             printf("Getting Processes named %s\n", config.application_names[i]);
         }
         struct Process_Group process_group;
-        process_group = get_process_group_by_name(config.application_names[i]);
+        process_group = get_process_group_by_name(config.application_names[i], config.application_timeout[i]);
 
         // Put processes into the aggregated process group.
         int j = 0;
@@ -101,7 +115,7 @@ struct Process_Group get_all_processes(struct Config config) {
 
 
 /* Checks whether a passed in process name is running. Passes back pids. */
-struct Process_Group get_process_group_by_name(char *process_name) {
+struct Process_Group get_process_group_by_name(char *process_name, int time_to_kill) {
     // File reading variables.
     FILE *fp;
     char *line = NULL;
@@ -163,7 +177,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
             printf("Parsed process id: %d ", process_group.process[i].process_id);
             printf("Process name: %s\n", process_group.process[i].process_name);
         }
-        process_group.process[i].process_monitored = 0;
+        process_group.process[i].time_to_kill = time_to_kill;
         process_group.process[i].process_monitor_id = -1;
         process_group.process_count = i + 1;
     }
@@ -176,7 +190,7 @@ struct Process_Group get_process_group_by_name(char *process_name) {
 /* Checks whether and existing procnanny process is already running */
 int proc_running(char *process_name) {
     // Get group of procnanny processes.
-    struct Process_Group process_group = get_process_group_by_name(process_name);
+    struct Process_Group process_group = get_process_group_by_name(process_name, 0);
     if (process_group.process_count) {
         // At least one procnanny process is running.
         return 1;
