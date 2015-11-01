@@ -178,7 +178,8 @@ int main(int argc, char *argv[]) {
     while (1) {
         fflush(stdout);
 
-        // Read from all pipes to see if any processes have been killed
+        // Read from all pipes to see if any processes have been killed if so update the
+        // child processes to a non busy status.
         int i = 0;
         for (;i < process_group.process_count; i++) {
             // Setup reqs for reading from pipe
@@ -209,8 +210,6 @@ int main(int argc, char *argv[]) {
 
                 // Reset the process info
                 process_group.process[i].time_to_kill = -1;
-                close(process_group.process[i].fd[0]);
-                close(process_group.process[i].fd[1]);
                 process_group.process[i].time_to_kill = -1;
                 process_group.process[i].busy = 0;
                 process_group.process[i].process_id = -1;
@@ -345,7 +344,7 @@ int main(int argc, char *argv[]) {
                     /* /CHILD PROCESS */
 
                     /* PARENT PROCESS AFTER FORK */
-                    }  else { // Parent process after the fork.
+                    }  else {
                         // Record monitoring process
                         char message[512];
                         sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[new_process_index].process_name, process_group.process[new_process_index].process_id);
@@ -368,16 +367,4 @@ int main(int argc, char *argv[]) {
             exit(0);
         }
     }
-
-/* OLD LOGGING SYSTEM
-    // Wait until the time specified has elapsed, then aggregate info from all
-    // killer child processes and place info into the main user specified log file.
-    sleep(config.time + 1);
-    aggregate_log_files(process_group, main_log_file_path);
-    int processes_killed = get_total_processes_killed();
-    char terminal_message[512];
-    sprintf(terminal_message, "Exiting. %d process(es) killed.", processes_killed);
-    log_message(terminal_message, INFO, main_log_file_path);
-    return 0;
-*/
 }
