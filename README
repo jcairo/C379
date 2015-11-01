@@ -25,4 +25,5 @@ Ensure the unix env variable PROCNANNYLOGS is set to the location of the logfile
 Sources:
 config_reader.c file reading code taken from http://stackoverflow.com/questions/3501338/c-read-file-line-by-line
 process_manader.c process status code take from http://stackoverflow.com/questions/5460702/check-running-processes-in-c
+http://www.albany.edu/~csi402/pdfs/handout_15.2.pdf
 
