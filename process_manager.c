@@ -12,6 +12,13 @@
 #define DEBUG 0
 #define MAX_CHARS 1000
 
+/* Returns an empty process group as a base for the system to start with */
+struct Process_Group get_empty_process_group() {
+    struct Process_Group empty_process_group;
+    empty_process_group.process_count = 0;
+    return empty_process_group;
+}
+
 /* Checks whether a process id is already monitored by a child */
 int is_monitored(int pid, struct Process_Group process_group) {
     int i = 0;

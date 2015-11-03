@@ -8,7 +8,8 @@
 // Represents a process
 struct Process {
     int time_to_kill; // Time the process should be killed in
-    int fd[2];  // Pipe to child process.
+    int pipe_to_child[2];  // Pipe to child process.
+    int pipe_to_parent[2];  // Pipe to parent process.
     int busy;   // Whether the child process is waiting to kill a process or not.
     pid_t process_id;       // Pid of the proceess being monitored
     pid_t process_monitor_id;  // Child Process monitoring the desired process pid.
@@ -22,6 +23,7 @@ struct Process_Group {
     struct Process process[MAX_PROCESSES];
 };
 
+struct Process_Group get_empty_process_group();
 int is_monitored(int pid, struct Process_Group process_group);
 int get_total_processes_killed();
 int kill_process(int pid);

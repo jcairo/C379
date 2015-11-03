@@ -35,6 +35,7 @@ void sighup_handler(int signo) {
 }
 
 int main(int argc, char *argv[]) {
+    printf("Parent process ID is: %d\n", getpid());
     // Setup signal handler for SIGINT/Kill
     if (signal(SIGINT, sigint_handler) == SIG_ERR) {
         printf("Can't catch SIGINT... Exiting\n");
@@ -72,8 +73,8 @@ int main(int argc, char *argv[]) {
     clear_log_file();
 
     // If we got here we are starting the monitoring process with procnanny.
-    // Start by getting all the processes requested to be monitored.
-    struct Process_Group process_group = get_all_processes(config);
+    // Start by setting up an empty version of the main process group.
+    struct Process_Group process_group = get_empty_process_group();
 
     if (DEBUG) {
         int k = 0;
@@ -83,105 +84,24 @@ int main(int argc, char *argv[]) {
         printf("Program count %d\n", process_group.process_count);
     }
 
-    // Fork all initial child processes.
-    int i = 0;
-    pid_t child_process_pid;
 
-    for (;i < process_group.process_count; i++) {
-
-        // Set up the target process struct and process group struct to be passed to child.
-        int time_to_kill = process_group.process[i].time_to_kill;
-        int process_to_kill = process_group.process[i].process_id;
-
-        // Create pipe to child
-        pipe(process_group.process[i].fd);
-
-        // Taken from http://www.albany.edu/~csi402/pdfs/handout_15.2.pdf
-        /* Set O_NONBLOCK flag for the read end (fd[0]) of the pipe. */
-        if (fcntl(process_group.process[i].fd[0], F_SETFL, O_NONBLOCK) == -1) {
-            fprintf(stderr, "Call to fcntl failed.\n"); exit(1);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((child_process_pid = fork()) < 0) {
-            printf("Error forking process. Exiting...\n");
-            exit(EXIT_FAILURE);
-
-/* CHILD PROCESS */
-        } else if (child_process_pid == 0) { // Child process after fork.
-
-            // Perform the initial kill.
-            sleep(time_to_kill);
-            int message = kill_process(process_to_kill);
-
-            // Write to pipe to tell parent child process killed
-            // 1 means killed 0 means not killed
-            printf("Message was %d\n", message);
-            if (message == 1) { write(process_group.process[i].fd[1], "1", 2);
-            } else if (message == 0) { write(process_group.process[i].fd[1], "0", 2);
-            } else { printf("The process was not killed returned unexepected result\n"); exit(EXIT_FAILURE);
-            }
-
-            while (1) {
-                // Setup reqs for reading from pipe
-                char readbuffer[512];
-                int readbytes;
-                char *pch;
-
-                // If read pipe returns value
-                readbytes = read(process_group.process[i].fd[0], readbuffer, sizeof(readbuffer));
-                if (DEBUG) {
-                    printf("Number of bytes read %d\n", readbytes);
-                    printf("Readbuffer  %s\n", readbuffer);
-                }
-                if (readbytes > 0) {
-                    // Pipe should send pid of process to kill followed by time to kill
-                    printf("Read %s from pipe\n", readbuffer);
-                    pch = strtok(readbuffer, " ");
-                    printf("Child Process pid to kill %s\n", pch);
-                    process_to_kill = atoi(pch);
-                    pch = strtok(NULL, " ");
-                    printf("Child Process time limit to kill %s\n", pch);
-                    time_to_kill = atoi(pch);
-                    sleep(time_to_kill);
-                    message = kill_process(process_to_kill);
-
-                    // Write to pipe to tell parent child process killed
-                    // 1 means killed 0 means not killed
-                    printf("Message was %d\n", message);
-                    if (message == 1) { write(process_group.process[i].fd[1], "1\0", 2);
-                    } else if (message == 0) { write(process_group.process[i].fd[1], "0\0", 2);
-                    } else { printf("The process was not killed returned unexepected result\n"); exit(EXIT_FAILURE);
-                    }
-                }
-            }
-/* /CHILD PROCESS */
-
-/* PARENT PROCESS AFTER FORK */
-        }  else {
-            // Record monitoring process
-            char message[512];
-            sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[i].process_name, process_group.process[i].process_id);
-            log_message(message, INFO, main_log_file_path);
-            process_group.process[i].process_monitor_id = child_process_pid;
-            process_group.process[i].busy = 1;
-        }
-/* /PARENT PROCESS AFTER FORK */
-    }
-
-    fflush(stdout);
     // int last_time_checked = (int)time(NULL);
     int non_busy_monitor_process_found = 0;
+    // Indicates the first time through the loop.
+    // All programs must be checked for the initial sweep.
+    int first_time_through = 1;
+    int time_last_checked = ((int)time(NULL));
     // int time_since_last_check = ((int)time(NULL) - last_time_checked);
 
-    // Main program loop
+    /* MAIN PROGRAM LOOP */
     while (1) {
         fflush(stdout);
-
+        sleep(1);
         // Read from all pipes to see if any processes have been killed if so update the
         // child processes to a non busy status.
         int i = 0;
         for (;i < process_group.process_count; i++) {
+            printf("In loop checking for communication from child processes. Child process count is %d\n", process_group.process_count);
             // Setup reqs for reading from pipe
             char readbuffer[512];
             int readbytes;
@@ -189,22 +109,22 @@ int main(int argc, char *argv[]) {
 
             // Read from pipe 1 means killed process 0 means process was killed before child tried to kill it.
             // This read is set not to block.
-            readbytes = read(process_group.process[i].fd[0], readbuffer, sizeof(readbuffer));
+            readbytes = read(process_group.process[i].pipe_to_parent[0], readbuffer, sizeof(readbuffer));
             // If we read anything from the pipe the process the message otherwise do nothing.
             if (readbytes > 0) {
-                printf("Read %d bytes from child process\n", readbytes);
-                printf("Read %s message from pipe\n", readbuffer);
+                printf("Parent read %d bytes from child process\n", readbytes);
+                printf("Parent read message: '%s' from pipe\n", readbuffer);
                 int child_message = atoi(readbuffer);
                 if (child_message == 1) {
                     // The child process succesfully killed its target, print to log
-                    char message[512];
-                    sprintf(message, "PID %d (%s) killed after exceeding %d seconds.\n", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
+                    char message[512] = {'\0'};
+                    sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
                     log_message(message, ACTION, main_log_file_path);
                 } else if (child_message == 0) {
                     // The child did not kill its target it was already dead.
                 } else {
                     // If the message is not 0 or 1 we have a problem quit.
-                    printf("The child message did not evaluate to 0 or 1. Unexptected behaviour shutting down...");
+                    printf("The child message did not evaluate to 0 or 1. Unexptected behaviour shutting down...\n");
                     exit(EXIT_FAILURE);
                 }
 
@@ -218,15 +138,16 @@ int main(int argc, char *argv[]) {
 
             }
         }
-        // Make sure to reset all the process_group info for each process.
 
         // Check if config should be reread or we should rescan processes.
-        if (reread_config) {
+        if (reread_config || ((int)time(NULL) - time_last_checked > 4) || first_time_through) {
+            printf("In check loop\n");
             // Determine whether we are rescanning programs because of 5 second time lapse or config reread.
 
             // If we are rereading the config Rearead the config file and replace old version.
             if (reread_config) {
                 config = read_config(argv[1]);
+                reread_config = 0;
             }
 
             // Get a list of active processes.
@@ -251,13 +172,14 @@ int main(int argc, char *argv[]) {
                             // Convert and concat program pid and time to monitor before sending in pipe.
                             char pid_string[10];
                             char time_to_kill_string[10];
-                            char string_to_pipe[20];
+                            char string_to_pipe[20] = {'\0'};
                             snprintf(pid_string, 10, "%d", current_process_group.process[i].process_id);
                             snprintf(time_to_kill_string, 10, "%d", current_process_group.process[i].time_to_kill);
-                            strcpy(string_to_pipe, pid_string);
-                            strcpy(string_to_pipe, " ");
-                            strcpy(string_to_pipe, time_to_kill_string);
-                            write(process_group.process[j].fd[1], string_to_pipe, sizeof(string_to_pipe));
+                            strcat(string_to_pipe, pid_string);
+                            strcat(string_to_pipe, " ");
+                            strcat(string_to_pipe, time_to_kill_string);
+                            write(process_group.process[j].pipe_to_child[1], string_to_pipe, sizeof(string_to_pipe));
+                            printf("Wrote %s to child\n", string_to_pipe);
 
                             // Update process group information
                             process_group.process[j].time_to_kill = current_process_group.process[i].time_to_kill;
@@ -286,16 +208,19 @@ int main(int argc, char *argv[]) {
                     process_group.process[new_process_index].process_id = process_to_kill;
                     strcpy(process_group.process[new_process_index].process_name, current_process_group.process[i].process_name);
 
-                    // Create pipe to child
-                    pipe(process_group.process[new_process_index].fd);
+                    // Create pipe to child and pipe to parent
+                    pipe(process_group.process[new_process_index].pipe_to_parent);
+                    pipe(process_group.process[new_process_index].pipe_to_child);
 
                     // Taken from http://www.albany.edu/~csi402/pdfs/handout_15.2.pdf
                     /* Set O_NONBLOCK flag for the read end (fd[0]) of the pipe. */
-                    if (fcntl(process_group.process[new_process_index].fd[0], F_SETFL, O_NONBLOCK) == -1) {
+                    if (fcntl(process_group.process[new_process_index].pipe_to_parent[0], F_SETFL, O_NONBLOCK) == -1) {
                         fprintf(stderr, "Call to fcntl failed.\n"); exit(1);
                         exit(EXIT_FAILURE);
                     }
 
+                    // Fork the child process.
+                    pid_t child_process_pid;
                     if ((child_process_pid = fork()) < 0) {
                         printf("Error forking process. Exiting...\n");
                         exit(EXIT_FAILURE);
@@ -309,8 +234,8 @@ int main(int argc, char *argv[]) {
 
                         // Write to pipe to tell parent child process killed
                         // 1 means killed 0 means not killed
-                        if (message == 1) { write(process_group.process[new_process_index].fd[1], "1", 1);
-                        } else if (message == 0) { write(process_group.process[new_process_index].fd[1], "0", 1);
+                        if (message == 1) { write(process_group.process[new_process_index].pipe_to_parent[1], "1\0", 2);
+                        } else if (message == 0) { write(process_group.process[new_process_index].pipe_to_parent[1], "0\0", 2);
                         } else { printf("The process was not killed returned unexepected result\n"); exit(EXIT_FAILURE);
                         }
 
@@ -319,24 +244,27 @@ int main(int argc, char *argv[]) {
                             char readbuffer[512];
                             int readbytes;
                             char *pch;
-
                             // If read pipe returns value
-                            readbytes = read(process_group.process[new_process_index].fd[0], readbuffer, sizeof(readbuffer));
+                            sleep(1);
+                            printf("In child read loop.");
+                            readbytes = read(process_group.process[new_process_index].pipe_to_child[0], readbuffer, sizeof(readbuffer));
+                            printf("Read %s from pipe 0\n", readbuffer);
+                            // readbytes = read(process_group.process[new_process_index].fd[1], readbuffer, sizeof(readbuffer));
+                            // printf("Read %s from pipe 1\n", readbuffer);
                             if (readbytes > 0) {
+                                printf("String received by child: %s\n", readbuffer);
                                 // Pipe should send pid of process to kill followed by time to kill
                                 pch = strtok(readbuffer, " ");
-                                printf("Child Process pid to kill %s\n", pch);
                                 process_to_kill = atoi(pch);
                                 pch = strtok(NULL, " ");
-                                printf("Child Process time limit to kill %s\n", pch);
                                 time_to_kill = atoi(pch);
                                 sleep(time_to_kill);
                                 message = kill_process(process_to_kill);
 
                                 // Write to pipe to tell parent child process killed
                                 // 1 means killed 0 means not killed
-                                if (message == 1) { write(process_group.process[new_process_index].fd[0], "1\0", 2);
-                                } else if (message == 0) { write(process_group.process[new_process_index].fd[0], "0\0", 2);
+                                if (message == 1) { write(process_group.process[new_process_index].pipe_to_parent[1], "1\0", 2);
+                                } else if (message == 0) { write(process_group.process[new_process_index].pipe_to_parent[1], "0\0", 2);
                                 } else { printf("The process was not killed returned unexepected result\n"); exit(EXIT_FAILURE);
                                 }
                             }
@@ -357,7 +285,7 @@ int main(int argc, char *argv[]) {
                 // Otherwise do nothing if process is already monitored.
             }
             // Unset reread config flag.
-            reread_config = 0;
+            time_last_checked = (int)time(NULL);
         }
 
         // Check if program should be sut down
@@ -366,5 +294,7 @@ int main(int argc, char *argv[]) {
             printf("Caught SIGINT... Leaving program\n");
             exit(0);
         }
+        first_time_through = 0;
     }
+    /* /MAIN PROGRAM LOOP */
 }
