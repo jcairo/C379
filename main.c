@@ -89,8 +89,11 @@ int main(int argc, char *argv[]) {
     // int last_time_checked = (int)time(NULL);
     int non_busy_monitor_process_found = 0;
     // Indicates the first time through the loop.
-    // All programs must be checked for the initial sweep.
+    // Used to determine whether we are in the loop for the first time.
     int first_time_through = 1;
+    // Indicates the total number of processes killed.
+    int total_processes_killed = 0;
+    // All programs must be checked for the initial sweep.
     int time_last_checked = ((int)time(NULL));
     // int time_since_last_check = ((int)time(NULL) - last_time_checked);
 
@@ -118,6 +121,7 @@ int main(int argc, char *argv[]) {
                 int child_message = atoi(readbuffer);
                 if (child_message == 1) {
                     // The child process succesfully killed its target, print to log
+                    total_processes_killed++;
                     char message[512] = {'\0'};
                     sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
                     log_message(message, ACTION, main_log_file_path, 0);
@@ -149,7 +153,7 @@ int main(int argc, char *argv[]) {
             if (reread_config) {
                 if (!first_time_through) {
                     char message[512] = { '\0' };
-                    sprintf(message, "Caught SIGHUP. Configuration file 'nanny.config' re-read.");
+                    sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", argv[1]);
                     log_message(message, INFO, main_log_file_path, 1);
                 }
                 first_time_through = 0;
@@ -281,7 +285,7 @@ int main(int argc, char *argv[]) {
                     /* PARENT PROCESS AFTER FORK */
                     }  else {
                         // Record monitoring process
-                        char message[512];
+                        char message[512] = {'\0'};
                         sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[new_process_index].process_name, process_group.process[new_process_index].process_id);
                         log_message(message, INFO, main_log_file_path, 0);
                         process_group.process[new_process_index].process_monitor_id = child_process_pid;
@@ -298,7 +302,9 @@ int main(int argc, char *argv[]) {
         // Check if program should be sut down
         if (kill_program) {
             // Might want to close all pipes before exiting here.
-            printf("Caught SIGINT... Leaving program\n");
+            char message[512] = {'\0'};
+            sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
+            log_message(message, INFO, main_log_file_path, 1);
             exit(0);
         }
     }
