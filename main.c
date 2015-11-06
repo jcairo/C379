@@ -197,6 +197,12 @@ int main(int argc, char *argv[]) {
                             process_group.process[j].busy = 1;
                             process_group.process[j].process_id = current_process_group.process[i].process_id;
                             strcpy(process_group.process[j].process_name, current_process_group.process[i].process_name);
+
+                            // Output to logfile new process being monitored
+                            // Record monitoring process
+                            char message[512] = {'\0'};
+                            sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[j].process_name, process_group.process[j].process_id);
+                            log_message(message, INFO, main_log_file_path, 0);
                             break;
                         }
                     }
