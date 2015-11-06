@@ -50,9 +50,10 @@ int main(int argc, char *argv[]) {
 
     // Parse config file
     struct Config config = read_config(argv[1]);
+    reread_config = 1;
 
     // Check if procnanny process is running and prompt user to kill.
-    struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0);
+    struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
     char *main_log_file_path = getenv("PROCNANNYLOGS");
     if (main_log_file_path == NULL) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
                     // The child process succesfully killed its target, print to log
                     char message[512] = {'\0'};
                     sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
-                    log_message(message, ACTION, main_log_file_path);
+                    log_message(message, ACTION, main_log_file_path, 0);
                 } else if (child_message == 0) {
                     // The child did not kill its target it was already dead.
                 } else {
@@ -140,18 +141,24 @@ int main(int argc, char *argv[]) {
         }
 
         // Check if config should be reread or we should rescan processes.
-        if (reread_config || ((int)time(NULL) - time_last_checked > 4) || first_time_through) {
+        if (reread_config || ((int)time(NULL) - time_last_checked > 4)) {
             printf("In check loop\n");
             // Determine whether we are rescanning programs because of 5 second time lapse or config reread.
 
             // If we are rereading the config Rearead the config file and replace old version.
             if (reread_config) {
+                if (!first_time_through) {
+                    char message[512] = { '\0' };
+                    sprintf(message, "Caught SIGHUP. Configuration file 'nanny.config' re-read.");
+                    log_message(message, INFO, main_log_file_path, 1);
+                }
+                first_time_through = 0;
                 config = read_config(argv[1]);
-                reread_config = 0;
             }
 
             // Get a list of active processes.
-            struct Process_Group current_process_group = get_all_processes(config);
+            struct Process_Group current_process_group = get_all_processes(config, reread_config);
+            reread_config = 0;
 
             // Iterate through all the current snapshot of processes to see which need monitoring.
             int i = 0;
@@ -276,7 +283,7 @@ int main(int argc, char *argv[]) {
                         // Record monitoring process
                         char message[512];
                         sprintf(message, "Initializing monitoring of process '%s' (PID %d).", process_group.process[new_process_index].process_name, process_group.process[new_process_index].process_id);
-                        log_message(message, INFO, main_log_file_path);
+                        log_message(message, INFO, main_log_file_path, 0);
                         process_group.process[new_process_index].process_monitor_id = child_process_pid;
                     }
                     /* /PARENT PROCESS AFTER FORK */
@@ -294,7 +301,6 @@ int main(int argc, char *argv[]) {
             printf("Caught SIGINT... Leaving program\n");
             exit(0);
         }
-        first_time_through = 0;
     }
     /* /MAIN PROGRAM LOOP */
 }

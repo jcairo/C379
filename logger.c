@@ -29,7 +29,7 @@ void clear_log_file() {
 
     // Determine whether we have a relative or absolute path.
     //if (path[0] == '/') {
-    //    // We have a relative path. 
+    //    // We have a relative path.
     //}
 
     FILE *fp;
@@ -38,7 +38,7 @@ void clear_log_file() {
 }
 
 /* Takes a string and logs it to the log file with appropriate formatting */
-void log_message(char *message, int type, char *log_file_path) {
+void log_message(char *message, int type, char *log_file_path, int print_to_stdout) {
     // Set the message type
     char message_type[BUFFER_LENGTH];
     if (type == INFO) {
@@ -57,18 +57,28 @@ void log_message(char *message, int type, char *log_file_path) {
 
     // Determine whether we have a relative or absolute path.
     //if (path[0] == '/') {
-    //    // We have a relative path. 
+    //    // We have a relative path.
     //}
-    
+
     // Get the time.
     char formatted_time[BUFFER_LENGTH];
     get_formatted_time(formatted_time);
-    
+
     // Open the file to write to.
     FILE *fp;
     fp = fopen(log_file_path, "a");
     fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);
+
+    // if boolean set also print to stdout.
+    if (print_to_stdout) {
+        char stdout_message[512] = {'\0'};
+        strcat(stdout_message, formatted_time);
+        strcat(stdout_message, " ");
+        strcat(stdout_message, message);
+        printf("%s\n", stdout_message);
+        fflush(stdout);
+    }
 }
 
 /* Aggregates the logfiles from each killer child process */
@@ -92,12 +102,12 @@ void aggregate_log_files(struct Process_Group process_group, char *main_log_file
             // No file exists by this name. Meaning the process was killed before
             // the killer child process had a chance to kill it so no log file was made.
             continue;
-            // printf("Error when opening process log file.\n"); 
+            // printf("Error when opening process log file.\n");
             // exit(EXIT_FAILURE);
         }
 
         // Read the log message.
-        read = getline(&line, &len, fp); 
+        read = getline(&line, &len, fp);
         fclose(fp);
 
         if (read == -1) {
@@ -105,7 +115,7 @@ void aggregate_log_files(struct Process_Group process_group, char *main_log_file
             remove(process_group.process[i].process_log_file_path);
             continue;
         }
-    
+
         // If there was a line of info in the file print it to the main log file.
         fp = fopen(main_log_file_path, "a");
         if (DEBUG) {
@@ -113,7 +123,7 @@ void aggregate_log_files(struct Process_Group process_group, char *main_log_file
         }
         fprintf(fp,"%s", line);
         fclose(fp);
-        
+
         // Remove the process log file.
         remove(process_group.process[i].process_log_file_path);
     }

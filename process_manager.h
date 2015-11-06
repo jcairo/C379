@@ -28,8 +28,8 @@ int is_monitored(int pid, struct Process_Group process_group);
 int get_total_processes_killed();
 int kill_process(int pid);
 void kill_processes(struct Process_Group process_group, struct Config config, char *log_file_path);
-struct Process_Group get_process_group_by_name(char *process_name, int time_to_kill);
-struct Process_Group get_all_processes(struct Config config);
+struct Process_Group get_process_group_by_name(char *process_name, int time_to_kill, int rereading_config);
+struct Process_Group get_all_processes(struct Config config, int rereading_config);
 int proc_nanny_running();
 
 #endif
