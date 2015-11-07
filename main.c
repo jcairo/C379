@@ -307,7 +307,15 @@ int main(int argc, char *argv[]) {
 
         // Check if program should be sut down
         if (kill_program) {
-            // Might want to close all pipes before exiting here.
+            // Close all pipes
+            int i = 0;
+            for (;i < process_group.process_count; i++) {
+                close(process_group.process[i].pipe_to_parent[0]);
+                close(process_group.process[i].pipe_to_parent[1]);
+                close(process_group.process[i].pipe_to_child[0]);
+                close(process_group.process[i].pipe_to_child[1]);
+            }
+
             char message[512] = {'\0'};
             sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
             log_message(message, INFO, main_log_file_path, 1);
