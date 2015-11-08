@@ -112,9 +112,6 @@ struct Process_Group get_all_processes(struct Config config, int rereading_confi
     // For each applictation name get all prcesses of that name
     // place them all into the aggregated process group.
     for (;i < config.application_count; i++) {
-        if (DEBUG) {
-            printf("Getting Processes named %s\n", config.application_names[i]);
-        }
         struct Process_Group process_group;
         process_group = get_process_group_by_name(config.application_names[i], config.application_timeout[i], rereading_config);
 

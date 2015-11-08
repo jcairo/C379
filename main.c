@@ -17,10 +17,12 @@
 // Stores the program name on the command line.
 char main_program_name[] = "procnanny";
 
-// Globals set my signals handlers.
+// Globals set by signals handlers.
 int reread_config = 0;
 int kill_program = 0;
-
+char *main_log_file_path;
+char *config_path;
+struct Config new_config;
 
 void sigint_handler(int signo) {
     if (signo == SIGINT) {
@@ -31,6 +33,10 @@ void sigint_handler(int signo) {
 void sighup_handler(int signo) {
     if (signo == SIGHUP) {
         reread_config = 1;
+        new_config = read_config(config_path);
+        char message[512] = { '\0' };
+        sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", config_path);
+        log_message(message, INFO, main_log_file_path, 1);;
     }
 }
 
@@ -48,13 +54,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    config_path = argv[1];
     // Parse config file
     struct Config config = read_config(argv[1]);
-    reread_config = 1;
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
-    char *main_log_file_path = getenv("PROCNANNYLOGS");
+    main_log_file_path = getenv("PROCNANNYLOGS");
     if (main_log_file_path == NULL) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
         exit(EXIT_FAILURE);
@@ -103,9 +109,9 @@ int main(int argc, char *argv[]) {
         sleep(1);
         // Read from all pipes to see if any processes have been killed if so update the
         // child processes to a non busy status.
+        printf("In loop checking for communication from child processes. Child process count is %d\n", process_group.process_count);
         int i = 0;
         for (;i < process_group.process_count; i++) {
-            printf("In loop checking for communication from child processes. Child process count is %d\n", process_group.process_count);
             // Setup reqs for reading from pipe
             char readbuffer[512];
             int readbytes;
@@ -145,23 +151,17 @@ int main(int argc, char *argv[]) {
         }
 
         // Check if config should be reread or we should rescan processes.
-        if (reread_config || ((int)time(NULL) - time_last_checked > 4)) {
+        if (first_time_through || ((int)time(NULL) - time_last_checked > 4)) {
             printf("In check loop\n");
-            // Determine whether we are rescanning programs because of 5 second time lapse or config reread.
 
             // If we are rereading the config Rearead the config file and replace old version.
             if (reread_config) {
-                if (!first_time_through) {
-                    char message[512] = { '\0' };
-                    sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", argv[1]);
-                    log_message(message, INFO, main_log_file_path, 1);
-                }
-                first_time_through = 0;
-                config = read_config(argv[1]);
+                config = new_config;
             }
 
             // Get a list of active processes.
-            struct Process_Group current_process_group = get_all_processes(config, reread_config);
+            struct Process_Group current_process_group = get_all_processes(config, reread_config || first_time_through);
+            first_time_through = 0;
             reread_config = 0;
 
             // Iterate through all the current snapshot of processes to see which need monitoring.
