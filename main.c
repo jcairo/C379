@@ -310,12 +310,37 @@ int main(int argc, char *argv[]) {
             // Close all pipes
             int i = 0;
             for (;i < process_group.process_count; i++) {
+                kill_process(process_group.process[i].process_monitor_id);
+                // Read from pipe to ensure no further processes killed
+                char readbuffer[512];
+                int readbytes;
+
+                // Read from pipe 1 means killed process 0 means process was killed before child tried to kill it.
+                // This read is set not to block.
+                readbytes = read(process_group.process[i].pipe_to_parent[0], readbuffer, sizeof(readbuffer));
+                // If we read anything from the pipe the process the message otherwise do nothing.
+                if (readbytes > 0) {
+                    int child_message = atoi(readbuffer);
+                    if (child_message == 1) {
+                        // The child process succesfully killed its target, print to log
+                        total_processes_killed++;
+                        char message[512] = {'\0'};
+                        sprintf(message, "PID %d (%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
+                        log_message(message, ACTION, main_log_file_path, 0);
+                    } else if (child_message == 0) {
+                        // The child did not kill its target it was already dead.
+                    } else {
+                        // If the message is not 0 or 1 we have a problem quit.
+                        printf("The child message did not evaluate to 0 or 1. Unexptected behaviour shutting down...\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                }
                 close(process_group.process[i].pipe_to_parent[0]);
                 close(process_group.process[i].pipe_to_parent[1]);
                 close(process_group.process[i].pipe_to_child[0]);
                 close(process_group.process[i].pipe_to_child[1]);
             }
-
             char message[512] = {'\0'};
             sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
             log_message(message, INFO, main_log_file_path, 1);
