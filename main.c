@@ -86,9 +86,11 @@ int main(int argc, char *argv[]) {
     if (DEBUG) {
         int k = 0;
         for (;k < process_group.process_count; k++) {
-            printf("Process found: %s, time to kill %d, process id is: %d\n", process_group.process[k].process_name, process_group.process[k].time_to_kill, process_group.process[k].process_id);
+            if (DEBUG) {
+                printf("Process found: %s, time to kill %d, process id is: %d\n", process_group.process[k].process_name, process_group.process[k].time_to_kill, process_group.process[k].process_id);
+                printf("Program count %d\n", process_group.process_count);
+            }
         }
-        printf("Program count %d\n", process_group.process_count);
     }
 
 
@@ -109,7 +111,6 @@ int main(int argc, char *argv[]) {
         sleep(1);
         // Read from all pipes to see if any processes have been killed if so update the
         // child processes to a non busy status.
-        printf("In loop checking for communication from child processes. Child process count is %d\n", process_group.process_count);
         int i = 0;
         for (;i < process_group.process_count; i++) {
             // Setup reqs for reading from pipe
@@ -122,8 +123,10 @@ int main(int argc, char *argv[]) {
             readbytes = read(process_group.process[i].pipe_to_parent[0], readbuffer, sizeof(readbuffer));
             // If we read anything from the pipe the process the message otherwise do nothing.
             if (readbytes > 0) {
-                printf("Parent read %d bytes from child process\n", readbytes);
-                printf("Parent read message: '%s' from pipe\n", readbuffer);
+                if (DEBUG) {
+                    printf("Parent read %d bytes from child process\n", readbytes);
+                    printf("Parent read message: '%s' from pipe\n", readbuffer);
+                }
                 int child_message = atoi(readbuffer);
                 if (child_message == 1) {
                     // The child process succesfully killed its target, print to log
@@ -152,7 +155,6 @@ int main(int argc, char *argv[]) {
 
         // Check if config should be reread or we should rescan processes.
         if (first_time_through || ((int)time(NULL) - time_last_checked > 4)) {
-            printf("In check loop\n");
 
             // If we are rereading the config Rearead the config file and replace old version.
             if (reread_config) {
@@ -190,7 +192,6 @@ int main(int argc, char *argv[]) {
                             strcat(string_to_pipe, " ");
                             strcat(string_to_pipe, time_to_kill_string);
                             write(process_group.process[j].pipe_to_child[1], string_to_pipe, sizeof(string_to_pipe));
-                            printf("Wrote %s to child\n", string_to_pipe);
 
                             // Update process group information
                             process_group.process[j].time_to_kill = current_process_group.process[i].time_to_kill;
@@ -213,7 +214,6 @@ int main(int argc, char *argv[]) {
                     }
 
                     // If we get here we know no free process exists we need to fork a new process.
-                    // Set up the target process struct and process group struct to be passed to child.
                     int time_to_kill = current_process_group.process[i].time_to_kill;
                     int process_to_kill = current_process_group.process[i].process_id;
                     int new_process_index = process_group.process_count;
