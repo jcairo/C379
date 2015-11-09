@@ -9,11 +9,13 @@ TA: Soham Sinha
 Description:
 The intention of procnanny is to monitor a list of user specified processes for a user specified amount of time.
 The program reads the user specifications in the nanny.config file.
-It then fork a child process for each user specified processes that exists.
+It then forks a child process for each user specified processes that exists.
 These children sleep for the user specified period of time.
 Upon being awakened they check to see if the process they are set to monitor still exists.
-If so they kill the process and report it in the logfile.
-Once all children have done this the parent procnanny process counts how many processes were killed and logs the number.
+If so they kill the process and report it via a pipe to the parent.
+After this report the child processes wait for further instructions from the parent.
+The program handles SIGINT by killing all child processes.
+The program handles SIGHUP by rereading the config file.
 The program as then shut down.
 
 Relevant Commands:
@@ -21,6 +23,8 @@ Type make at the command line to build procnanny.
 Type make clean to clear out .o and the procnanny executable.
 Type ./procnanny nanny.config to execute the program
 Ensure the unix env variable PROCNANNYLOGS is set to the location of the logfile.
+You can send a quit signal to the parent process using kill SIGINT process_id.
+You can send a reread config request to the parent process using kill SIGHUP process_id.
 
 Sources:
 config_reader.c file reading code taken from http://stackoverflow.com/questions/3501338/c-read-file-line-by-line
