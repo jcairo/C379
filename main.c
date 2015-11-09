@@ -28,6 +28,7 @@ void sigint_handler(int signo) {
     if (signo == SIGINT) {
         kill_program = 1;
     }
+    return;
 }
 
 void sighup_handler(int signo) {
@@ -38,10 +39,10 @@ void sighup_handler(int signo) {
         sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", config_path);
         log_message(message, INFO, main_log_file_path, 1);;
     }
+    return;
 }
 
 int main(int argc, char *argv[]) {
-    printf("Parent process ID is: %d\n", getpid());
     // Setup signal handler for SIGINT/Kill
     if (signal(SIGINT, sigint_handler) == SIG_ERR) {
         printf("Can't catch SIGINT... Exiting\n");
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]) {
     /* MAIN PROGRAM LOOP */
     while (1) {
         fflush(stdout);
-        sleep(1);
+
         // Read from all pipes to see if any processes have been killed if so update the
         // child processes to a non busy status.
         int i = 0;
@@ -163,6 +164,9 @@ int main(int argc, char *argv[]) {
 
             // Get a list of active processes.
             struct Process_Group current_process_group = get_all_processes(config, reread_config || first_time_through);
+            if (DEBUG) {
+                printf("Found %d processes on rescan after 5 seconds.\n", current_process_group.process_count);
+            }
             first_time_through = 0;
             reread_config = 0;
 
@@ -262,14 +266,9 @@ int main(int argc, char *argv[]) {
                             int readbytes;
                             char *pch;
                             // If read pipe returns value
-                            sleep(1);
-                            printf("In child read loop.");
                             readbytes = read(process_group.process[new_process_index].pipe_to_child[0], readbuffer, sizeof(readbuffer));
-                            printf("Read %s from pipe 0\n", readbuffer);
                             // readbytes = read(process_group.process[new_process_index].fd[1], readbuffer, sizeof(readbuffer));
-                            // printf("Read %s from pipe 1\n", readbuffer);
                             if (readbytes > 0) {
-                                printf("String received by child: %s\n", readbuffer);
                                 // Pipe should send pid of process to kill followed by time to kill
                                 pch = strtok(readbuffer, " ");
                                 process_to_kill = atoi(pch);
@@ -305,17 +304,18 @@ int main(int argc, char *argv[]) {
             time_last_checked = (int)time(NULL);
         }
 
-        // Check if program should be sut down
+        // Check if program should be shut down from SIGINT signal.
         if (kill_program) {
-            // Close all pipes
+            // Read any last messages and close all pipes
             int i = 0;
             for (;i < process_group.process_count; i++) {
+                // Kill the child process so it can't do anything more.
                 kill_process(process_group.process[i].process_monitor_id);
-                // Read from pipe to ensure no further processes killed
+                // Read from pipe to ensure no further processes have been killed
                 char readbuffer[512];
                 int readbytes;
 
-                // Read from pipe 1 means killed process 0 means process was killed before child tried to kill it.
+                // Read from pipe '1' means killed process. '0' means process was killed before child tried to kill it.
                 // This read is set not to block.
                 readbytes = read(process_group.process[i].pipe_to_parent[0], readbuffer, sizeof(readbuffer));
                 // If we read anything from the pipe the process the message otherwise do nothing.
@@ -336,11 +336,15 @@ int main(int argc, char *argv[]) {
                     }
 
                 }
+
+                // Close all pipes to the child.
                 close(process_group.process[i].pipe_to_parent[0]);
                 close(process_group.process[i].pipe_to_parent[1]);
                 close(process_group.process[i].pipe_to_child[0]);
                 close(process_group.process[i].pipe_to_child[1]);
             }
+
+            // Do final kill count and exiting message and then exit.
             char message[512] = {'\0'};
             sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
             log_message(message, INFO, main_log_file_path, 1);
