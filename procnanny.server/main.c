@@ -26,6 +26,7 @@ char main_program_name[] = "procnanny.server";
 int reread_config = 0;
 int kill_program = 0;
 char *main_log_file_path;
+char *server_log_file_path;
 char *config_path;
 struct Config new_config;
 
@@ -42,7 +43,7 @@ void sighup_handler(int signo) {
         new_config = read_config(config_path);
         char message[512] = { '\0' };
         sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", config_path);
-        log_message(message, INFO, main_log_file_path, 1);;
+        log_message(message, INFO, main_log_file_path, 1, 0);;
     }
     return;
 }
@@ -63,6 +64,24 @@ int main(int argc, char *argv[]) {
     config_path = argv[1];
     // Parse config file
     struct Config config = read_config(argv[1]);
+
+    // Get the server log file path.
+    server_log_file_path = getenv("PROCNANNYSERVERINFO");
+    if (server_log_file_path == NULL) {
+        printf("Error when reading PROCNANNYSERVERINFO variable.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Print the server info the the server file.
+    char server_info[512] = {'\0'};
+    char hostname[1024];
+    hostname[1023] = '\0';
+    gethostname(hostname, 1023);
+    printf("Hostname: %s\n", hostname);
+    struct hostent* h;
+    h = gethostbyname(hostname);
+    sprintf(server_info, "NODE %s PID %d PORT %d", h->h_name, getpid(), MY_PORT);
+    log_message(server_info, INFO, server_log_file_path, 0, 1);
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);

@@ -85,7 +85,7 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
             kill(process_group.process[i].process_id, SIGKILL);
             char message[512];
             // sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
-            log_message(message, ACTION, log_file_path, 0);
+            log_message(message, ACTION, log_file_path, 0, 0);
         } else if (errno == ESRCH) {
             // No process is running
             if (DEBUG) {
@@ -186,7 +186,7 @@ struct Process_Group get_process_group_by_name(char *process_name, int time_to_k
             // is called every 5 seconds and when a config reread is requested this
             // prevents printing every 5 seconds and only when its required from the config reread.
             if (rereading_config) {
-                log_message(message, INFO, main_log_file_path, 0);
+                log_message(message, INFO, main_log_file_path, 0, 0);
             }
 
             process_group.process_count = 0;

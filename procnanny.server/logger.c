@@ -38,7 +38,7 @@ void clear_log_file() {
 }
 
 /* Takes a string and logs it to the log file with appropriate formatting */
-void log_message(char *message, int type, char *log_file_path, int print_to_stdout) {
+void log_message(char *message, int type, char *log_file_path, int print_to_stdout, int print_raw) {
     // Set the message type
     char message_type[BUFFER_LENGTH];
     if (type == INFO) {
@@ -66,6 +66,15 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // Open the file to write to.
     FILE *fp;
+    // This is for the server info it has no time prefixing and is all caps.
+    if (print_raw) {
+        fp = fopen(log_file_path, "w+");
+        fprintf(fp, "%s\n", message);
+        fclose(fp);
+        return;
+    }
+
+    // If not printing raw were just logging info as normal.
     fp = fopen(log_file_path, "a");
     fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);
