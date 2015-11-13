@@ -8,6 +8,22 @@
 
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
+    // Start by reading the raw contents of the file into the config structure.
+    struct Config config = {'\0'};
+    FILE *f_raw;
+
+    // Open the file and store its raw contents..
+    f_raw = fopen(path, "r");
+    if (f_raw == NULL) {
+        perror("Error when opening config file");
+        exit(EXIT_FAILURE);
+    }
+    fseek(f_raw, 0, SEEK_END);
+    long f_size = ftell(f_raw);
+    fseek(f_raw, 0, SEEK_SET);
+    fread(config.raw_config, f_size, 1, f_raw);
+    fclose(f_raw);
+
     // Open the file
     // File reading code taken from http://stackoverflow.com/questions/3501338/c-read-file-line-by-line
     // September 21, 2015
@@ -15,7 +31,6 @@ struct Config read_config(char *path) {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    struct Config config;
 
     // Open the file.
     fp = fopen(path, "r");

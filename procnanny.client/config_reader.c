@@ -5,9 +5,20 @@
 #include <string.h>
 
 #define DEBUG 0
+#define CONFIG_PATH "nanny.config"
 
 /* Takes absolute path to config file. Returns config struct */
 struct Config read_config(char *path) {
+    // Write the string to a file
+    FILE *f;
+    f = fopen(CONFIG_PATH, "w+");
+    if (f == NULL) {
+        perror("Could not open file to write config to.\n");
+        exit(0);
+    }
+    fputs(path, f);
+    fclose(f);
+
     // Open the file
     // File reading code taken from http://stackoverflow.com/questions/3501338/c-read-file-line-by-line
     // September 21, 2015
@@ -18,7 +29,7 @@ struct Config read_config(char *path) {
     struct Config config;
 
     // Open the file.
-    fp = fopen(path, "r");
+    fp = fopen(CONFIG_PATH, "r");
     if (fp == NULL) {
         perror("Error when opening config file");
         exit(EXIT_FAILURE);

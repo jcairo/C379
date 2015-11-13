@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <resolv.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "user_interaction.h"
 #include "process_manager.h"
 #include "config_reader.h"
@@ -13,51 +19,59 @@
 #include "memwatch.h"
 
 #define DEBUG 0
+#define BUFFER_SIZE 10000
 
 // Stores the program name on the command line.
-char main_program_name[] = "procnanny";
+char main_program_name[] = "procnanny.client";
 
 // Globals set by signals handlers.
 int reread_config = 0;
 int kill_program = 0;
 char *main_log_file_path;
-char *config_path;
 struct Config new_config;
 
-void sigint_handler(int signo) {
-    if (signo == SIGINT) {
-        kill_program = 1;
-    }
-    return;
-}
-
-void sighup_handler(int signo) {
-    if (signo == SIGHUP) {
-        reread_config = 1;
-        new_config = read_config(config_path);
-        char message[512] = { '\0' };
-        sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", config_path);
-        log_message(message, INFO, main_log_file_path, 1);;
-    }
-    return;
-}
-
 int main(int argc, char *argv[]) {
-    // Setup signal handler for SIGINT/Kill
-    if (signal(SIGINT, sigint_handler) == SIG_ERR) {
-        printf("Can't catch SIGINT... Exiting\n");
-        exit(EXIT_FAILURE);
+    // Begin by making a connection to the server.
+    int sockfd, portno, read_bytes;
+    struct sockaddr_in serv_addr;
+    struct hostent *server;
+
+    // Get portnumber and host.
+    portno = atoi(argv[2]);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("ERROR opening socket");
     }
 
-    // Setup signal handler for SIGHUP/Config reread
-    if (signal(SIGHUP, sighup_handler) == SIG_ERR) {
-        printf("Cant catch SIGHUP... Exiting\n");
-        exit(EXIT_FAILURE);
+    server = gethostbyname(argv[1]);
+    if (server == NULL) {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
     }
 
-    config_path = argv[1];
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr,
+         (char *)&serv_addr.sin_addr.s_addr,
+         server->h_length);
+    serv_addr.sin_port = htons(portno);
+
+    if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
+        perror("ERROR connecting");
+    }
+    char raw_config[BUFFER_SIZE] = {'\0'};
+    read_bytes = read(sockfd, raw_config, sizeof(raw_config));
+    printf("Read total of %d bytes\n", read_bytes);
+    fflush(stdout);
+
+    if (read_bytes < 0) {
+        perror("Did not receive config file upon first contact with server.\n");
+        exit(0);
+    }
+
     // Parse config file
-    struct Config config = read_config(argv[1]);
+    struct Config config = read_config(raw_config);
+    printf("Config file has %d total lines.\n", config.application_count);
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
