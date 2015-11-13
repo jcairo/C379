@@ -59,6 +59,8 @@ int main(int argc, char *argv[]) {
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
         perror("ERROR connecting");
     }
+
+    // Read the config which the server always sends on inital connection.
     char raw_config[BUFFER_SIZE] = {'\0'};
     read_bytes = read(sockfd, raw_config, sizeof(raw_config));
     printf("Read total of %d bytes\n", read_bytes);
@@ -71,7 +73,8 @@ int main(int argc, char *argv[]) {
 
     // Parse config file
     struct Config config = read_config(raw_config);
-    printf("Config file has %d total lines.\n", config.application_count);
+    // After the initial read make the socket no blocking.
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
@@ -123,6 +126,34 @@ int main(int argc, char *argv[]) {
     /* MAIN PROGRAM LOOP */
     while (1) {
         fflush(stdout);
+        sleep(1);
+//////// NEW CODE
+        // Read on the reg from the server to see whats the happs.
+        read_bytes = 0;
+        char buffer[BUFFER_SIZE];
+        read_bytes = read(sockfd, buffer, sizeof(buffer));
+        printf("Read total of %d bytes from server\n", read_bytes);
+        fflush(stdout);
+
+        if (read_bytes <= 0) {
+            printf("Nothing to read from server.\n");
+        } else {
+            // Otherwise we did get a new message. Figure out what it was.
+            // First check whether its the kill message
+            if (strcmp(buffer, "EGGZIT") == 0) {
+                // We received the kill signal
+                kill_program = 1;
+            } else {
+                // If its not a kill signal we have a new config.
+                reread_config = 1;
+                new_config = read_config(buffer);
+                char message[512] = {'\0'};
+                sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read.", "Config path");
+                log_message(message, INFO, main_log_file_path, 1);;
+            }
+
+        }
+//////// NEW CODE
 
         // Read from all pipes to see if any processes have been killed if so update the
         // child processes to a non busy status.
@@ -362,6 +393,7 @@ int main(int argc, char *argv[]) {
             char message[512] = {'\0'};
             sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
             log_message(message, INFO, main_log_file_path, 1);
+            close(sockfd);
             exit(0);
         }
     }

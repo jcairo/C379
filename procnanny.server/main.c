@@ -15,8 +15,9 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MY_PORT 2222
+#define MY_PORT 2223
 #define DEBUG 0
+#define BUFFER_SIZE 10000
 
 // Stores the program name on the command line.
 char main_program_name[] = "procnanny.server";
@@ -159,7 +160,9 @@ int main(int argc, char *argv[]) {
             // Send message to each client notifying to kill
             int i = 0;
             for (;i < client_socket_group_count; i++) {
-                write(client_socket_group[i], "EXIT", sizeof("EXIT"));
+                char message[BUFFER_SIZE] = {'\0'};
+                strcpy(message, "EGGZIT");
+                write(client_socket_group[i], message, sizeof(message));
                 close(client_socket_group[i]);
             }
 
@@ -173,8 +176,9 @@ int main(int argc, char *argv[]) {
         // Read from each open socket to see if we have info from clients we need to log.
         int k = 0;
         for(;k < client_socket_group_count; k++) {
+            int bytes_read = 0;
             char buffer[1024] = {'\0'};
-            int bytes_read = read(client_socket_group[k], &buffer, sizeof(buffer));
+            bytes_read = read(client_socket_group[k], &buffer, sizeof(buffer));
             if (bytes_read > 0) {
                 // Received logging info, forward to log file.
             }
