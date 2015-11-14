@@ -208,6 +208,8 @@ int main(int argc, char *argv[]) {
             if (bytes_read > 0) {
                 // Received logging info, forward to log file.
                 printf("Received message from client %s", buffer);
+                // Check to see if buffer contains killed message first.
+                log_raw_message(buffer, main_log_file_path);
             }
             // Otherwise nothing to read do nothing.
         }

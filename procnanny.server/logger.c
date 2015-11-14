@@ -37,6 +37,16 @@ void clear_log_file() {
     fclose(fp);
 }
 
+/* Takes a raw message from clients and logs it to log file. */
+void log_raw_message(char *message, char *log_file_path) {
+    // Open the file to write to.
+    FILE *fp;
+    fp = fopen(log_file_path, "a");
+    printf("Message sent to logfile is: %s", message);
+    fprintf(fp, "%s", message);
+    fclose(fp);
+}
+
 /* Takes a string and logs it to the log file with appropriate formatting */
 void log_message(char *message, int type, char *log_file_path, int print_to_stdout, int print_raw) {
     // Set the message type
