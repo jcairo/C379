@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
     sprintf(server_info, "NODE %s PID %d PORT %d", h->h_name, getpid(), MY_PORT);
     log_message(server_info, INFO, server_log_file_path, 0, 1);
 
+    // Log required server info message to main logfile.
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
     main_log_file_path = getenv("PROCNANNYLOGS");
@@ -90,6 +91,12 @@ int main(int argc, char *argv[]) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
         exit(EXIT_FAILURE);
     }
+
+    // Print server info to main log file as well.
+    char server_info_main_log_file[512] = {'\0'};
+    sprintf(server_info_main_log_file, "procnanny server: PID %d on node %s, port %d", getpid(), h->h_name, MY_PORT);
+    log_message(server_info_main_log_file, NONE, main_log_file_path, 0, 0);
+
 
     if (procnanny_process_group.process_count > 1) {
         // Prompt user to quit existing process.
@@ -196,10 +203,11 @@ int main(int argc, char *argv[]) {
         int k = 0;
         for(;k < client_socket_group_count; k++) {
             int bytes_read = 0;
-            char buffer[1024] = {'\0'};
+            char buffer[BUFFER_SIZE] = {'\0'};
             bytes_read = read(client_socket_group[k], &buffer, sizeof(buffer));
             if (bytes_read > 0) {
                 // Received logging info, forward to log file.
+                printf("Received message from client %s", buffer);
             }
             // Otherwise nothing to read do nothing.
         }

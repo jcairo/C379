@@ -29,10 +29,12 @@ int reread_config = 0;
 int kill_program = 0;
 char *main_log_file_path;
 struct Config new_config;
+// Socket file descriptor global so logger can access without passing socket in function.
+int sockfd;
 
 int main(int argc, char *argv[]) {
     // Begin by making a connection to the server.
-    int sockfd, portno, read_bytes;
+    int portno, read_bytes;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 

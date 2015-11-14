@@ -3,6 +3,7 @@
 
 #define INFO 0
 #define ACTION 1
+#define NONE 2
 #include "process_manager.h"
 
 void clear_log_file();

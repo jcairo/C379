@@ -2,11 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <resolv.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include "logger.h"
 
 #define DEBUG 0
 #define BUFFER_LENGTH 256
-
+#define BUFFER_SIZE 10000
+// The socket which is global in the main.c file.
+extern int sockfd;
 
 /* Returns a formatted string */
 void get_formatted_time(char *buffer) {
@@ -48,27 +57,18 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
         strcpy(message_type, "Action: ");
     }
 
-    // Get log file path
-    //char *path = getenv("PROCNANNYLOGS");
-    //if (path == NULL) {
-    //    printf("Error when reading path to procnanny log file.\n");
-    //    exit(EXIT_FAILURE);
-    //}
-
-    // Determine whether we have a relative or absolute path.
-    //if (path[0] == '/') {
-    //    // We have a relative path.
-    //}
-
     // Get the time.
-    char formatted_time[BUFFER_LENGTH];
+    char formatted_time[BUFFER_LENGTH] = {'\0'};
     get_formatted_time(formatted_time);
 
     // Open the file to write to.
-    FILE *fp;
-    fp = fopen(log_file_path, "a");
-    fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
-    fclose(fp);
+    char socket_message[BUFFER_SIZE] = {'\0'};
+    sprintf(socket_message, "%s %s%s\n", formatted_time, message_type, message);
+    int wrote_bytes = write(sockfd, socket_message, sizeof(socket_message));
+    if (wrote_bytes < 0) {
+        perror("Error when writing log message to server.\n");
+        exit(0);
+    }
 
     // if boolean set also print to stdout.
     if (print_to_stdout) {

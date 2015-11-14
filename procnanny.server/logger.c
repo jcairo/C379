@@ -40,28 +40,19 @@ void clear_log_file() {
 /* Takes a string and logs it to the log file with appropriate formatting */
 void log_message(char *message, int type, char *log_file_path, int print_to_stdout, int print_raw) {
     // Set the message type
-    char message_type[BUFFER_LENGTH];
+    char message_type[BUFFER_LENGTH] = {'\0'};
     if (type == INFO) {
         strcpy(message_type, "Info: ");
     }
     if (type == ACTION){
         strcpy(message_type, "Action: ");
     }
-
-    // Get log file path
-    //char *path = getenv("PROCNANNYLOGS");
-    //if (path == NULL) {
-    //    printf("Error when reading path to procnanny log file.\n");
-    //    exit(EXIT_FAILURE);
-    //}
-
-    // Determine whether we have a relative or absolute path.
-    //if (path[0] == '/') {
-    //    // We have a relative path.
-    //}
+    if (type == NONE) {
+        strcpy(message_type, " ");
+    }
 
     // Get the time.
-    char formatted_time[BUFFER_LENGTH];
+    char formatted_time[BUFFER_LENGTH] = {'\0'};
     get_formatted_time(formatted_time);
 
     // Open the file to write to.
