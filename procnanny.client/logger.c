@@ -48,6 +48,13 @@ void clear_log_file() {
 
 /* Takes a string and logs it to the log file with appropriate formatting */
 void log_message(char *message, int type, char *log_file_path, int print_to_stdout) {
+    // Get the name of the host computer for logging purposes.
+    char hostname[512] = {'\0'};
+    struct hostent* h;
+    gethostname(hostname, 512);
+    printf("Hostname: %s\n", hostname);
+    h = gethostbyname(hostname);
+
     // Set the message type
     char message_type[BUFFER_LENGTH];
     if (type == INFO) {
@@ -63,7 +70,7 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // Open the file to write to.
     char socket_message[BUFFER_SIZE] = {'\0'};
-    sprintf(socket_message, "%s %s%s\n", formatted_time, message_type, message);
+    sprintf(socket_message, "%s %s%s on node %s.\n", formatted_time, message_type, message, h->h_name);
     int wrote_bytes = write(sockfd, socket_message, sizeof(socket_message));
     if (wrote_bytes < 0) {
         perror("Error when writing log message to server.\n");

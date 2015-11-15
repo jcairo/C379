@@ -29,6 +29,7 @@ char *main_log_file_path;
 char *server_log_file_path;
 char *config_path;
 struct Config new_config;
+int kill_count = 0;
 
 void sigint_handler(int signo) {
     if (signo == SIGINT) {
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
     /* MAIN PROGRAM LOOP */
     while (1) {
         printf("In Loop\n");
-        sleep(1);
+        sleep(10);
         // Always read from the connection socket to see if we have new connections.
         fflush(stdout);
         fromlength = sizeof (from);
@@ -194,7 +195,10 @@ int main(int argc, char *argv[]) {
 
 
             // Do a final read from the sockets to ensure no more processes were killed.
-
+            // Log the total number of processes killed.
+            char message[512] = {'\0'};
+            sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", kill_count);
+            log_message(message, INFO, main_log_file_path, 1, 0);
             close(sock);
             exit(0);
         }
@@ -209,6 +213,9 @@ int main(int argc, char *argv[]) {
                 // Received logging info, forward to log file.
                 printf("Received message from client %s", buffer);
                 // Check to see if buffer contains killed message first.
+                if (strstr(buffer, "killed") != NULL) {
+                    kill_count++;
+                }
                 log_raw_message(buffer, main_log_file_path);
             }
             // Otherwise nothing to read do nothing.

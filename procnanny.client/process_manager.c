@@ -89,7 +89,7 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
         } else if (errno == ESRCH) {
             // No process is running
             if (DEBUG) {
-                printf("No process with pid %d is running. Child monitoring process exited without killing.\n", process_group.process[i].process_id);
+                printf("No process with pid %d is running. Child monitoring process exited without killing\n", process_group.process[i].process_id);
             }
         } else {
             // Some other erro
@@ -173,7 +173,7 @@ struct Process_Group get_process_group_by_name(char *process_name, int time_to_k
         if (read == -1 && i == 0) {
             char message[512];
 
-            sprintf(message, "No '%s' processes found.", process_name);
+            sprintf(message, "No '%s' processes found", process_name);
 
             char *main_log_file_path = getenv("PROCNANNYLOGS");
             if (main_log_file_path == NULL) {

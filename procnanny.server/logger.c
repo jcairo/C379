@@ -42,7 +42,6 @@ void log_raw_message(char *message, char *log_file_path) {
     // Open the file to write to.
     FILE *fp;
     fp = fopen(log_file_path, "a");
-    printf("Message sent to logfile is: %s", message);
     fprintf(fp, "%s", message);
     fclose(fp);
 }
@@ -77,6 +76,10 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // If not printing raw were just logging info as normal.
     fp = fopen(log_file_path, "a");
+    printf("Logfile path is %s\n", log_file_path);
+    printf("Message: %s\n", message);
+    printf("Time: %s\n", formatted_time);
+    fflush(fp);
     fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);
 
@@ -89,6 +92,8 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
         printf("%s\n", stdout_message);
         fflush(stdout);
     }
+
+    return;
 }
 
 /* Aggregates the logfiles from each killer child process */
