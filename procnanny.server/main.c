@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MY_PORT 2223
+#define MY_PORT 2224
 #define DEBUG 0
 #define BUFFER_SIZE 10000
 

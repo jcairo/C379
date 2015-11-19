@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     // Read the config which the server always sends on inital connection.
     char raw_config[BUFFER_SIZE] = {'\0'};
     read_bytes = read(sockfd, raw_config, sizeof(raw_config));
-    printf("Read total of %d bytes\n", read_bytes);
+    // printf("Read total of %d bytes\n", read_bytes);
     fflush(stdout);
 
     if (read_bytes < 0) {
@@ -135,11 +135,11 @@ int main(int argc, char *argv[]) {
         read_bytes = 0;
         char buffer[BUFFER_SIZE];
         read_bytes = read(sockfd, buffer, sizeof(buffer));
-        printf("Read total of %d bytes from server\n", read_bytes);
+        // printf("Read total of %d bytes from server\n", read_bytes);
         fflush(stdout);
 
         if (read_bytes <= 0) {
-            printf("Nothing to read from server.\n");
+            // printf("Nothing to read from server.\n");
         } else {
             // Otherwise we did get a new message. Figure out what it was.
             // First check whether its the kill message
@@ -196,7 +196,6 @@ int main(int argc, char *argv[]) {
                 process_group.process[i].time_to_kill = -1;
                 process_group.process[i].busy = 0;
                 process_group.process[i].process_id = -1;
-                process_group.process[i].process_monitor_id = -1;
                 strcpy(process_group.process[i].process_name, "");
 
             }
@@ -359,6 +358,7 @@ int main(int argc, char *argv[]) {
             for (;i < process_group.process_count; i++) {
                 // Kill the child process so it can't do anything more.
                 kill_process(process_group.process[i].process_monitor_id);
+
                 // Read from pipe to ensure no further processes have been killed
                 char readbuffer[512];
                 int readbytes;

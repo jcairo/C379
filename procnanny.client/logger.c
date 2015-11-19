@@ -52,7 +52,6 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
     char hostname[512] = {'\0'};
     struct hostent* h;
     gethostname(hostname, 512);
-    printf("Hostname: %s\n", hostname);
     h = gethostbyname(hostname);
 
     // Set the message type
