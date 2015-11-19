@@ -37,6 +37,26 @@ void clear_log_file() {
     fclose(fp);
 }
 
+
+/* Clears the existing server log file */
+void clear_server_log_file() {
+    // Get log file path
+    char *path = getenv("PROCNANNYSERVERINFO");
+    if (path == NULL) {
+        printf("Error when reading PROCNANNYLOGS variable.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Determine whether we have a relative or absolute path.
+    //if (path[0] == '/') {
+    //    // We have a relative path.
+    //}
+
+    FILE *fp;
+    fp = fopen(path, "w");
+    fclose(fp);
+}
+
 /* Takes a raw message from clients and logs it to log file. */
 void log_raw_message(char *message, char *log_file_path) {
     // Open the file to write to.
@@ -57,7 +77,7 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
         strcpy(message_type, "Action: ");
     }
     if (type == NONE) {
-        strcpy(message_type, " ");
+        strcpy(message_type, "");
     }
 
     // Get the time.
@@ -66,9 +86,9 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // Open the file to write to.
     FILE *fp;
-    // This is for the server info it has no time prefixing and is all caps.
+    // This is for the server info it has no time prefixing.
     if (print_raw) {
-        fp = fopen(log_file_path, "w+");
+        fp = fopen(log_file_path, "a");
         fprintf(fp, "%s\n", message);
         fclose(fp);
         return;

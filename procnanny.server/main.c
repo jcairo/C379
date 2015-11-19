@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MY_PORT 2224
+#define MY_PORT 2402
 #define DEBUG 0
 #define BUFFER_SIZE 10000
 
@@ -25,8 +25,8 @@ char main_program_name[] = "procnanny.server";
 // Globals set by signals handlers.
 int reread_config = 0;
 int kill_program = 0;
-char *main_log_file_path;
-char *server_log_file_path;
+char main_log_file_path[512] = {'\0'};
+char server_log_file_path[512] = {'\0'};
 char *config_path;
 struct Config new_config;
 int kill_count = 0;
@@ -67,28 +67,31 @@ int main(int argc, char *argv[]) {
     struct Config config = read_config(argv[1]);
 
     // Get the server log file path.
-    server_log_file_path = getenv("PROCNANNYSERVERINFO");
-    if (server_log_file_path == NULL) {
+    strcpy(server_log_file_path, getenv("PROCNANNYSERVERINFO"));
+    if (getenv("PROCNANNYSERVERINFO") == NULL) {
         printf("Error when reading PROCNANNYSERVERINFO variable.\n");
         exit(EXIT_FAILURE);
     }
 
+    // CLear logfiles.
+    clear_log_file();
+    clear_server_log_file();
+
     // Print the server info the the server file.
     char server_info[512] = {'\0'};
-    char hostname[1024];
-    hostname[1023] = '\0';
+    char hostname[1024] ={'\0'};
     gethostname(hostname, 1023);
-    printf("Hostname: %s\n", hostname);
     struct hostent* h;
     h = gethostbyname(hostname);
     sprintf(server_info, "NODE %s PID %d PORT %d", h->h_name, getpid(), MY_PORT);
+    printf("Server log file path: %s\n", server_log_file_path);
     log_message(server_info, INFO, server_log_file_path, 0, 1);
 
     // Log required server info message to main logfile.
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
-    main_log_file_path = getenv("PROCNANNYLOGS");
-    if (main_log_file_path == NULL) {
+    strcpy(main_log_file_path, getenv("PROCNANNYLOGS"));
+    if (getenv("PROCNANNYLOGS") == NULL) {
         printf("Error when reading PROCNANNYLOGS variable.\n");
         exit(EXIT_FAILURE);
     }
@@ -110,7 +113,6 @@ int main(int argc, char *argv[]) {
             exit(0);
         }
     }
-    clear_log_file();
 
     // If we got here we are starting the monitoring process with procnanny.
     // Start by creating a place to store sockets to clients.
@@ -146,7 +148,6 @@ int main(int argc, char *argv[]) {
 
     /* MAIN PROGRAM LOOP */
     while (1) {
-        printf("In Loop\n");
         // Always read from the connection socket to see if we have new connections.
         while (1) {
             fflush(stdout);
@@ -154,7 +155,7 @@ int main(int argc, char *argv[]) {
             snew = accept(sock, (struct sockaddr*) &from, &fromlength);
             if (snew < 0) {
                 // An error occured with the socket.
-                perror ("Server: Nothing to read.\n");
+                // perror ("Server: Nothing to read.\n");
                 break;
             } else {
                 // Make the client socket non blocking.

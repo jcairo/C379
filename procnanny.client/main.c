@@ -129,7 +129,6 @@ int main(int argc, char *argv[]) {
     /* MAIN PROGRAM LOOP */
     while (1) {
         fflush(stdout);
-        sleep(1);
 //////// NEW CODE
         // Read on the reg from the server to see whats the happs.
         read_bytes = 0;
@@ -152,7 +151,7 @@ int main(int argc, char *argv[]) {
                 new_config = read_config(buffer);
                 char message[512] = {'\0'};
                 sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read", "Config path");
-                log_message(message, INFO, main_log_file_path, 1);;
+                log_message(message, INFO, main_log_file_path, 0);
             }
 
         }
