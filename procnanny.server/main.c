@@ -147,24 +147,25 @@ int main(int argc, char *argv[]) {
     /* MAIN PROGRAM LOOP */
     while (1) {
         printf("In Loop\n");
-        sleep(10);
         // Always read from the connection socket to see if we have new connections.
-        fflush(stdout);
-        fromlength = sizeof (from);
-        snew = accept(sock, (struct sockaddr*) &from, &fromlength);
-        if (snew < 0) {
-            // An error occured with the socket.
-            perror ("Server: Nothing to read.\n");
-        } else {
-            // Make the client socket non blocking.
-            fcntl(snew, F_SETFL, O_NONBLOCK);
-            // If we accepted a new connection write the config file.
-            write (snew, &config.raw_config, sizeof (config.raw_config));
-            // Store the socket in the connections array.
-            client_socket_group[client_socket_group_count] = snew;
-            client_socket_group_count++;
+        while (1) {
+            fflush(stdout);
+            fromlength = sizeof (from);
+            snew = accept(sock, (struct sockaddr*) &from, &fromlength);
+            if (snew < 0) {
+                // An error occured with the socket.
+                perror ("Server: Nothing to read.\n");
+                break;
+            } else {
+                // Make the client socket non blocking.
+                fcntl(snew, F_SETFL, O_NONBLOCK);
+                // If we accepted a new connection write the config file.
+                write (snew, &config.raw_config, sizeof (config.raw_config));
+                // Store the socket in the connections array.
+                client_socket_group[client_socket_group_count] = snew;
+                client_socket_group_count++;
+            }
         }
-
 
         if (reread_config) {
             // Reset reread_config flag.
