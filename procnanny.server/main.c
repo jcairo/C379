@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MY_PORT 2402
+#define MY_PORT 2407
 #define DEBUG 0
 #define BUFFER_SIZE 10000
 
@@ -84,7 +84,6 @@ int main(int argc, char *argv[]) {
     struct hostent* h;
     h = gethostbyname(hostname);
     sprintf(server_info, "NODE %s PID %d PORT %d", h->h_name, getpid(), MY_PORT);
-    printf("Server log file path: %s\n", server_log_file_path);
     log_message(server_info, INFO, server_log_file_path, 0, 1);
 
     // Log required server info message to main logfile.

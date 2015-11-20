@@ -96,9 +96,6 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // If not printing raw were just logging info as normal.
     fp = fopen(log_file_path, "a");
-    printf("Logfile path is %s\n", log_file_path);
-    printf("Message: %s\n", message);
-    printf("Time: %s\n", formatted_time);
     fflush(fp);
     fprintf(fp, "%s %s%s\n", formatted_time, message_type, message);
     fclose(fp);

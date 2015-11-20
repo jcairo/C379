@@ -83,7 +83,7 @@ void kill_processes(struct Process_Group process_group, struct Config config, ch
             kill(process_group.process[i].process_id, SIGKILL);
             char message[512];
             // sprintf(message, "PID %d(%s) killed after exceeding %d seconds.", process_group.process[i].process_id, process_group.process[i].process_name, config.time);
-            log_message(message, ACTION, log_file_path, 0);
+            log_message(message, ACTION, log_file_path, 0, 0);
         } else if (errno == ESRCH) {
             // No process is running
             if (DEBUG) {
@@ -173,18 +173,14 @@ struct Process_Group get_process_group_by_name(char *process_name, int time_to_k
 
             sprintf(message, "No '%s' processes found", process_name);
 
-            char *main_log_file_path = getenv("PROCNANNYLOGS");
-            if (main_log_file_path == NULL) {
-                printf("Error when reading PROCNANNYLOGS variable.\n");
-                exit(EXIT_FAILURE);
-            }
+            char main_log_file_path[512] = {'\0'};
 
             // We only want to print this if we are rereading the config file.
             // We don't want to print on every 5 second interval and since this function
             // is called every 5 seconds and when a config reread is requested this
             // prevents printing every 5 seconds and only when its required from the config reread.
             if (rereading_config) {
-                log_message(message, INFO, main_log_file_path, 0);
+                log_message(message, INFO, main_log_file_path, 0, 0);
             }
 
             process_group.process_count = 0;
@@ -228,15 +224,7 @@ int proc_running(char *process_name) {
 }
 
 int get_total_processes_killed() {
-    char *path = getenv("PROCNANNYLOGS");
-    if (DEBUG) {
-        printf("PROCNANNYLOGS in get_total_processes_killed function path is: %s\n", path);
-    }
-    if (path == NULL) {
-        printf("Error when reading PROCNANNYLOGS variable.\n");
-        exit(EXIT_FAILURE);
-    }
-
+    char path[512] = {'\0'};
     // File reading variables.
     FILE *fp;
     char *line = NULL;

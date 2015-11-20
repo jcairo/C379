@@ -27,13 +27,19 @@ char main_program_name[] = "procnanny.client";
 // Globals set by signals handlers.
 int reread_config = 0;
 int kill_program = 0;
-char *main_log_file_path;
+// This is now just a placeholder and does nothing.
+char main_log_file_path[512] = {'\0'};
 struct Config new_config;
 
 // Socket file descriptor global so logger can access without passing socket in function.
 int sockfd;
 
 int main(int argc, char *argv[]) {
+    char hostname[512] = {'\0'};
+    struct hostent* h;
+    gethostname(hostname, 512);
+    h = gethostbyname(hostname);
+
     // Begin by making a connection to the server.
     int portno, read_bytes;
     struct sockaddr_in serv_addr;
@@ -81,11 +87,6 @@ int main(int argc, char *argv[]) {
 
     // Check if procnanny process is running and prompt user to kill.
     struct Process_Group procnanny_process_group = get_process_group_by_name(main_program_name, 0, 0);
-    main_log_file_path = getenv("PROCNANNYLOGS");
-    if (main_log_file_path == NULL) {
-        printf("Error when reading PROCNANNYLOGS variable.\n");
-        exit(EXIT_FAILURE);
-    }
 
     if (procnanny_process_group.process_count > 1) {
         // Prompt user to quit existing process.
@@ -98,7 +99,6 @@ int main(int argc, char *argv[]) {
             exit(0);
         }
     }
-    clear_log_file();
 
     // If we got here we are starting the monitoring process with procnanny.
     // Start by setting up an empty version of the main process group.
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     while (1) {
         fflush(stdout);
 //////// NEW CODE
-        // Read on the reg from the server to see whats the happs.
+        // Read from main socket to see if new connections are waiting.
         read_bytes = 0;
         char buffer[BUFFER_SIZE];
         read_bytes = read(sockfd, buffer, sizeof(buffer));
@@ -149,9 +149,9 @@ int main(int argc, char *argv[]) {
                 // If its not a kill signal we have a new config.
                 reread_config = 1;
                 new_config = read_config(buffer);
-                char message[512] = {'\0'};
-                sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read", "Config path");
-                log_message(message, INFO, main_log_file_path, 0);
+                // char message[512] = {'\0'};
+                // sprintf(message, "Caught SIGHUP. Configuration file '%s' re-read", "Config path");
+                // log_message(message, INFO, main_log_file_path, 0, 0);
             }
 
         }
@@ -180,8 +180,8 @@ int main(int argc, char *argv[]) {
                     // The child process succesfully killed its target, print to log
                     total_processes_killed++;
                     char message[512] = {'\0'};
-                    sprintf(message, "PID %d (%s) killed after exceeding %d seconds", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
-                    log_message(message, ACTION, main_log_file_path, 0);
+                    sprintf(message, "PID %d (%s) on %s killed after exceeding %d seconds", process_group.process[i].process_id, process_group.process[i].process_name, h->h_name, process_group.process[i].time_to_kill);
+                    log_message(message, ACTION, main_log_file_path, 0, 1);
                 } else if (child_message == 0) {
                     // The child did not kill its target it was already dead.
                 } else {
@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
                             // Record monitoring process
                             char message[512] = {'\0'};
                             sprintf(message, "Initializing monitoring of process '%s' (PID %d)", process_group.process[j].process_name, process_group.process[j].process_id);
-                            log_message(message, INFO, main_log_file_path, 0);
+                            log_message(message, INFO, main_log_file_path, 0, 0);
                             break;
                         }
                     }
@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
                         // Record monitoring process
                         char message[512] = {'\0'};
                         sprintf(message, "Initializing monitoring of process '%s' (PID %d)", process_group.process[new_process_index].process_name, process_group.process[new_process_index].process_id);
-                        log_message(message, INFO, main_log_file_path, 0);
+                        log_message(message, INFO, main_log_file_path, 0, 0);
                         process_group.process[new_process_index].process_monitor_id = child_process_pid;
                     }
                     /* /PARENT PROCESS AFTER FORK */
@@ -372,8 +372,8 @@ int main(int argc, char *argv[]) {
                         // The child process succesfully killed its target, print to log
                         total_processes_killed++;
                         char message[512] = {'\0'};
-                        sprintf(message, "PID %d (%s) killed after exceeding %d seconds", process_group.process[i].process_id, process_group.process[i].process_name, process_group.process[i].time_to_kill);
-                        log_message(message, ACTION, main_log_file_path, 0);
+                        sprintf(message, "PID %d (%s) on %s killed after exceeding %d seconds", process_group.process[i].process_id, process_group.process[i].process_name, h->h_name, process_group.process[i].time_to_kill);
+                        log_message(message, ACTION, main_log_file_path, 0, 1);
                     } else if (child_message == 0) {
                         // The child did not kill its target it was already dead.
                     } else {
@@ -391,10 +391,6 @@ int main(int argc, char *argv[]) {
                 close(process_group.process[i].pipe_to_child[1]);
             }
 
-            // Do final kill count and exiting message and then exit.
-            // char message[512] = {'\0'};
-            // sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", total_processes_killed);
-            // log_message(message, INFO, main_log_file_path, 1);
             close(sockfd);
             exit(0);
         }

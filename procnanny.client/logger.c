@@ -27,27 +27,8 @@ void get_formatted_time(char *buffer) {
     strftime(buffer, BUFFER_LENGTH, "[%a %b %d %X %Z %Y] ", info);
 }
 
-/* Clears the existing log file */
-void clear_log_file() {
-    // Get log file path
-    char *path = getenv("PROCNANNYLOGS");
-    if (path == NULL) {
-        printf("Error when reading PROCNANNYLOGS variable.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // Determine whether we have a relative or absolute path.
-    //if (path[0] == '/') {
-    //    // We have a relative path.
-    //}
-
-    FILE *fp;
-    fp = fopen(path, "w");
-    fclose(fp);
-}
-
 /* Takes a string and logs it to the log file with appropriate formatting */
-void log_message(char *message, int type, char *log_file_path, int print_to_stdout) {
+void log_message(char *message, int type, char *log_file_path, int print_to_stdout, int middle_node_formatting) {
     // Get the name of the host computer for logging purposes.
     char hostname[512] = {'\0'};
     struct hostent* h;
@@ -69,7 +50,11 @@ void log_message(char *message, int type, char *log_file_path, int print_to_stdo
 
     // Open the file to write to.
     char socket_message[BUFFER_SIZE] = {'\0'};
-    sprintf(socket_message, "%s %s%s on node %s.\n", formatted_time, message_type, message, h->h_name);
+    if (middle_node_formatting) {
+        sprintf(socket_message, "%s %s%s.\n", formatted_time, message_type, message);
+    } else {
+        sprintf(socket_message, "%s %s%s on node %s.\n", formatted_time, message_type, message, h->h_name);
+    }
     int wrote_bytes = write(sockfd, socket_message, sizeof(socket_message));
     if (wrote_bytes < 0) {
         perror("Error when writing log message to server.\n");
