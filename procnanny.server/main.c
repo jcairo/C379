@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MY_PORT 2407
+#define MY_PORT 2409
 #define DEBUG 0
 #define BUFFER_SIZE 10000
 
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
             bytes_read = read(client_socket_group[k], &buffer, sizeof(buffer));
             if (bytes_read > 0) {
                 // Received logging info, forward to log file.
-                printf("Received message from client %s", buffer);
+                // printf("Received message from client %s", buffer);
                 // Check to see if buffer contains killed message first.
                 if (strstr(buffer, "killed") != NULL) {
                     kill_count++;

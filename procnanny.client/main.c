@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
 
     /* MAIN PROGRAM LOOP */
     while (1) {
+        sleep(1);
         fflush(stdout);
 //////// NEW CODE
         // Read from main socket to see if new connections are waiting.
@@ -135,10 +136,9 @@ int main(int argc, char *argv[]) {
         char buffer[BUFFER_SIZE];
         read_bytes = read(sockfd, buffer, sizeof(buffer));
         // printf("Read total of %d bytes from server\n", read_bytes);
-        fflush(stdout);
 
-        if (read_bytes <= 0) {
-            // printf("Nothing to read from server.\n");
+        if (read_bytes <= 0 || read_bytes != BUFFER_SIZE) {
+            // printf("First check after initial config read. Nothing to read from server.\n");
         } else {
             // Otherwise we did get a new message. Figure out what it was.
             // First check whether its the kill message

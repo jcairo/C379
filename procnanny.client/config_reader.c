@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "config_reader.h"
+#include <unistd.h>
 #include <string.h>
 
 #define DEBUG 0
@@ -34,13 +35,11 @@ struct Config read_config(char *path) {
         perror("Error when opening config file");
         exit(EXIT_FAILURE);
     }
-
     // Read and parse programs to be monitored.
     int i = 0;
     for (; i < MAX_CONFIG_PROGRAMS + 1; i++) {
         read = getline(&line, &len, fp);
-
-        if (DEBUG) {
+        if (0) {
             printf("Read line %s\n", line);
         }
         // Ensure config file has at least one program to read.
