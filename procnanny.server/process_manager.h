@@ -23,6 +23,7 @@ struct Process_Group {
     struct Process process[MAX_PROCESSES];
 };
 
+void get_node_name(char *log_statement, char *node_name);
 struct Process_Group get_empty_process_group();
 int is_monitored(int pid, struct Process_Group process_group);
 int get_total_processes_killed();

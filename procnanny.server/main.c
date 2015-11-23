@@ -18,6 +18,14 @@
 #define MY_PORT 2409
 #define DEBUG 0
 #define BUFFER_SIZE 10000
+// Struct stores names of nodes
+struct Node {
+    char node_name[512];
+    int node_name_attained;
+};
+
+// List of all nodes and their names.
+struct Node nodes[512];
 
 // Stores the program name on the command line.
 char main_program_name[] = "procnanny.server";
@@ -194,11 +202,31 @@ int main(int argc, char *argv[]) {
                 close(client_socket_group[i]);
             }
 
+            // Read from the socket one last time to see if we have any killed processes
+            // since we issued the command.
 
-            // Do a final read from the sockets to ensure no more processes were killed.
+            // Format a string with node names processes were killed on.
+            char node_names[1028] = {'\0'};
+            int e = 0;
+            for (;e < client_socket_group_count; e++) {
+                // This checks whether a process was killed on this node
+                if (nodes[e].node_name_attained) {
+                    // If a process was killed on this node add it to the string of nodes.
+                    strcat(node_names, nodes[e].node_name);
+                    strcat(node_names, ", ");
+                }
+            }
+            // Strip the last comma
+            node_names[strlen(node_names) - 1] = '\0';
+            node_names[strlen(node_names) - 2] = '\0';
+
             // Log the total number of processes killed.
             char message[512] = {'\0'};
-            sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed.", kill_count);
+            if (kill_count == 0) {
+                sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed on node(s).", kill_count);
+            } else {
+                sprintf(message, "Caught SIGINT. Exiting cleanly. %d process(es) killed on node(s) %s", kill_count, node_names);
+            }
             log_message(message, INFO, main_log_file_path, 1, 0);
             close(sock);
             exit(0);
@@ -216,6 +244,13 @@ int main(int argc, char *argv[]) {
                 // Check to see if buffer contains killed message first.
                 if (strstr(buffer, "killed") != NULL) {
                     kill_count++;
+                    // Check if we have the node name. If not get it.
+                    if (!nodes[k].node_name_attained) {
+                        get_node_name(buffer, nodes[k].node_name);
+                        nodes[k].node_name_attained = 1;
+                        // Remove new line from node name
+                        nodes[k].node_name[strlen(nodes[k].node_name) - 2] = '\0';
+                    }
                 }
                 log_raw_message(buffer, main_log_file_path);
             }

@@ -12,6 +12,39 @@
 #define DEBUG 0
 #define MAX_CHARS 1000
 
+void get_node_name(char *log_statement, char *node_name) {
+    // File reading variables.
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+
+    char command[512] = {'\0'};
+    // Concat the command components.
+    char command_prefix[] = "echo '";
+    strcat(command, command_prefix);
+    strcat(command, log_statement);
+    char command_postfix[] = "' | awk '{print $12}'";
+    strcat(command, command_postfix);
+
+    // Run the command.
+    fp = popen(command, "r");
+    if (DEBUG) {
+    }
+    if (fp == NULL) {
+        printf("Error during popen of ps aux command.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read process ids from the ps aux statement.
+    read = getline(&line, &len, fp);
+    if (read < 0) {
+        printf("Did no receive output of statement run to get node name");
+        exit(0);
+    }
+    strcpy(node_name, line);
+}
 
 /* Checks whether a process was in the last version of the config file */
 int process_not_in_old_config(char *process_name, struct Config old_config) {
