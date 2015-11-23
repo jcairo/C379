@@ -204,6 +204,29 @@ int main(int argc, char *argv[]) {
 
             // Read from the socket one last time to see if we have any killed processes
             // since we issued the command.
+            int k = 0;
+            for(;k < client_socket_group_count; k++) {
+                int bytes_read = 0;
+                char buffer[BUFFER_SIZE] = {'\0'};
+                bytes_read = read(client_socket_group[k], &buffer, sizeof(buffer));
+                if (bytes_read > 0) {
+                    // Received logging info, forward to log file.
+                    // printf("Received message from client %s", buffer);
+                    // Check to see if buffer contains killed message first.
+                    if (strstr(buffer, "killed") != NULL) {
+                        kill_count++;
+                        // Check if we have the node name. If not get it.
+                        if (!nodes[k].node_name_attained) {
+                            get_node_name(buffer, nodes[k].node_name);
+                            nodes[k].node_name_attained = 1;
+                            // Remove new line from node name
+                            nodes[k].node_name[strlen(nodes[k].node_name) - 2] = '\0';
+                        }
+                    }
+                    log_raw_message(buffer, main_log_file_path);
+                }
+                // Otherwise nothing to read do nothing.
+            }
 
             // Format a string with node names processes were killed on.
             char node_names[1028] = {'\0'};
