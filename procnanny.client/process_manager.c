@@ -54,7 +54,7 @@ int kill_process(int pid) {
         return 1;
     } else if (errno == ESRCH) {
         // No process is running
-        printf("No process with pid %d is running. Child monitoring process did not kill desired process.\n", pid);
+        // printf("No process with pid %d is running. Child monitoring process did not kill desired process.\n", pid);
         return 0;
     } else {
         // Some other erro
