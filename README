@@ -14,15 +14,16 @@ These children sleep for the user specified period of time.
 Upon being awakened they check to see if the process they are set to monitor still exists.
 If so they kill the process and report it via a pipe to the parent.
 After this report the child processes wait for further instructions from the parent.
+All of this is orchestrated by a server process which sends commands via a socket to all connected clients.
 The program handles SIGINT by killing all child processes.
 The program handles SIGHUP by rereading the config file.
-The program as then shut down.
+The program is then shut down.
 
 Relevant Commands:
 Type make at the command line to build procnanny.
 Type make clean to clear out .o and the procnanny executable.
 Type ./procnanny nanny.config to execute the program
-Ensure the unix env variable PROCNANNYLOGS is set to the location of the logfile.
+Ensure the unix env variable PROCNANNYLOGS and PROCNANNYSERVERINFO are set to the location of the logfiles.
 You can send a quit signal to the parent process using kill SIGINT process_id.
 You can send a reread config request to the parent process using kill SIGHUP process_id.
 
